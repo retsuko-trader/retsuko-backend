@@ -1,0 +1,6 @@
+@retsuko_backend_HostAddress = http://localhost:5166
+
+GET {{retsuko_backend_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
