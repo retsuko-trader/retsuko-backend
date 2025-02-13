@@ -65,7 +65,7 @@ public static partial class Migrations {
     await command.ExecuteNonQueryAsync();
   }
 
-  public static async Task CreatePaperTrade() {
+  public static async Task CreatePaperTrader() {
     var command = Database.PaperTrader.CreateCommand();
     command.CommandText = @"CREATE TABLE IF NOT EXISTS paper_trader (
       id VARCHAR PRIMARY KEY,

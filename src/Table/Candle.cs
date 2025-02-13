@@ -1,9 +1,11 @@
+using System.Data.Common;
+
 public enum Market {
   futures,
   spot,
 }
 
-public record Candle(
+public record struct Candle(
   Market market,
   string symbol,
   DateTime ts,
@@ -39,4 +41,14 @@ public record Candle(
       .AppendValue(volume)
       .EndRow();
   }
+}
+
+public record struct Dataset(
+  Market market,
+  string symbol,
+  int interval,
+  DateTime start,
+  DateTime end,
+  int count
+) {
 }

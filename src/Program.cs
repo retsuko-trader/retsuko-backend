@@ -1,15 +1,18 @@
-using Binance.Net.Clients;
-using Binance.Net.Enums;
-using Retsuko;
-using System.Linq;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddControllers();
+builder.Services.AddMvc()
+  .AddJsonOptions(options => {
+    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+  });
 
 var app = builder.Build();
 
+app.MapControllerRoute("default", "{controller=Home}/{action=Index}/{id?}");
+app.Run();
+/*
 var binance = new BinanceRestClient();
 var api = binance.UsdFuturesApi.ExchangeData;
 var exchanges = await api.GetExchangeInfoAsync();
@@ -86,4 +89,4 @@ foreach (var symbol in symbols) {
   }
 }
 
-// app.Run();
+*/
