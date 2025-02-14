@@ -1,5 +1,3 @@
-using System.Data.Common;
-
 public enum Market {
   futures,
   spot,
