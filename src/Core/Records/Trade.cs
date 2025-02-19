@@ -7,4 +7,5 @@ public record struct Trade(
   double price,
   double profit
 ) {
+  public double TotalBalance => asset * price + currency;
 }

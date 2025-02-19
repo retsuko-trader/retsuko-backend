@@ -1,9 +1,13 @@
-public class Backtester {
+public class Backtester: Trader {
   private readonly BacktestConfig config;
-  private BacktestMetrics metrics;
+  private TraderMetrics metrics;
 
-  public Backtester(BacktestConfig config) {
+  public Backtester(BacktestConfig config): base(
+    new BacktestCandleLoader(config.dataset),
+    StrategyLoader.CreateStrategy(config.strategy.name, config.strategy.config)!,
+    new PaperBroker(config.broker)
+  ) {
     this.config = config;
-    this.metrics = BacktestMetrics.Empty;
+    this.metrics = TraderMetrics.Empty;
   }
 }

@@ -1,14 +1,14 @@
-public record struct BacktestReport(
+public record struct TraderReport(
   BacktestConfig config,
   double startBalance,
   double endBalance,
   double profit,
   Trade[] trades,
-  BacktestMetrics metrics
+  TraderMetrics metrics
 ) {
 }
 
-public record struct BacktestMetrics(
+public record struct TraderMetrics(
   int totalTrades,
   int avgTrades,
   double totalProfit,
@@ -27,7 +27,7 @@ public record struct BacktestMetrics(
   DateTime drawdownEndTs,
   double marketChange
 ) {
-  public static BacktestMetrics Empty => new(
+  public static TraderMetrics Empty => new(
     0, 0, 0, 0, 0, 0, 0, 0, DateTime.MinValue, 0, DateTime.MinValue, 0, 0, 0, DateTime.MinValue, DateTime.MinValue, 0
   );
 }

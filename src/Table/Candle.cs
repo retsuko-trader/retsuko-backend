@@ -27,11 +27,24 @@ public record struct Candle(
     );
   }
 
+
+  public static Candle From(Market market, string symbol, System.Data.Common.DbDataReader reader) {
+    return new Candle(
+      market,
+      symbol,
+      reader.GetDateTime(0),
+      reader.GetDouble(1),
+      reader.GetDouble(2),
+      reader.GetDouble(3),
+      reader.GetDouble(4),
+      reader.GetDouble(5)
+    );
+  }
+
   public void AppendRow(DuckDB.NET.Data.IDuckDBAppenderRow row) {
     row.AppendValue(market.ToString())
       .AppendValue(symbol)
       .AppendValue(ts)
-      .AppendValue(close)
       .AppendValue(open)
       .AppendValue(high)
       .AppendValue(low)

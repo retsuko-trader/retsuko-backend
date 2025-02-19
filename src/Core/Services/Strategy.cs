@@ -1,4 +1,4 @@
-public abstract class Strategy<TConfig>: ISerializable where TConfig: struct {
+public abstract class Strategy<TConfig>: IStrategy, ISerializable where TConfig: struct {
   public TConfig Config { get; protected set; }
 
   protected List<IIndicator> indicators;

@@ -9,7 +9,7 @@ public record struct SuperTrendStrategyConfig {
   public float ConfidenceBias { get; init; }
 }
 
-public class SuperTrendStrategy: Strategy<SuperTrendStrategyConfig> {
+public class SuperTrendStrategy: Strategy<SuperTrendStrategyConfig>, IStrategyCreate<SuperTrendStrategy> {
   record struct State(
     double upperBandBasic,
     double lowerBandBasic,
@@ -27,6 +27,18 @@ public class SuperTrendStrategy: Strategy<SuperTrendStrategyConfig> {
   private int age;
   private double confidence;
   private double prevBuyConfidence;
+
+  public static string DefaultConfig => JsonSerializer.Serialize(new SuperTrendStrategyConfig {
+    AtrPeriod = 10,
+    BandFactor = 1.5f,
+    TrailingStop = 1.5f,
+    ConfidenceMultiplier = 1.5f,
+    ConfidenceBias = 0.1f,
+  });
+
+  public static SuperTrendStrategy Create(string config) {
+    return new SuperTrendStrategy(JsonSerializer.Deserialize<SuperTrendStrategyConfig>(config));
+  }
 
   public SuperTrendStrategy(SuperTrendStrategyConfig config): base(config) {
     this.config = config;
