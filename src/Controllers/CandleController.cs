@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Retsuko;
 
-[Route("[controller]")]
+[Route("candle")]
 public class CandleController : Controller {
   [HttpGet]
   public async Task<IActionResult> GetDataset() {

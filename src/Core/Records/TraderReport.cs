@@ -10,7 +10,7 @@ public record struct TraderReport(
 
 public record struct TraderMetrics(
   int totalTrades,
-  int avgTrades,
+  double avgTrades,
   double totalProfit,
   double cagr,
   double sortino,

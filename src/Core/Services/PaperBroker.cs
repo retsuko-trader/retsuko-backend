@@ -12,6 +12,8 @@ public class PaperBroker: IBroker, ISerializable {
   Portfolio portfolio;
   Position? position;
 
+  public double InitialBalance => config.initialBalance;
+
   public PaperBroker(PaperBrokerConfig config) {
     this.config = config;
     portfolio = new Portfolio(0, config.initialBalance, config.initialBalance);

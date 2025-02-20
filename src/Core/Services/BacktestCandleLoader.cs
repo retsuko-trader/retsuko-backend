@@ -15,10 +15,12 @@ public class BacktestCandleLoader: ICandleLoader {
     var command = Database.Candle.CreateCommand();
     command.UseStreamingMode = true;
 
-    command.CommandText = "SELECT ts, open, high, low, close, volume FROM candle WHERE market = $market AND symbol = $symbol AND interval = $interval ORDER BY ts ASC";
+    command.CommandText = "SELECT ts, open, high, low, close, volume FROM candle WHERE market = $market AND symbol = $symbol AND interval = $interval AND ts BETWEEN $start AND $end ORDER BY ts ASC";
     command.Parameters.Add(new DuckDBParameter("market", config.market.ToString()));
     command.Parameters.Add(new DuckDBParameter("symbol", config.symbol));
     command.Parameters.Add(new DuckDBParameter("interval", config.interval));
+    command.Parameters.Add(new DuckDBParameter("start", config.start));
+    command.Parameters.Add(new DuckDBParameter("end", config.end));
 
     reader = await command.ExecuteReaderAsync();
     return true;

@@ -1,6 +1,5 @@
 public class Backtester: Trader {
   private readonly BacktestConfig config;
-  private TraderMetrics metrics;
 
   public Backtester(BacktestConfig config): base(
     new BacktestCandleLoader(config.dataset),
@@ -9,5 +8,16 @@ public class Backtester: Trader {
   ) {
     this.config = config;
     this.metrics = TraderMetrics.Empty;
+  }
+
+  public TraderReport GetReport() {
+    return new TraderReport(
+      config,
+      broker.InitialBalance,
+      broker.GetPortfolio().currency + broker.GetPortfolio().asset * lastCandle!.Value.close,
+      metrics.totalProfit,
+      trades.ToArray(),
+      metrics
+    );
   }
 }
