@@ -4,7 +4,8 @@ public abstract class Trader {
   public IBroker broker { get; protected set; }
 
   protected List<Trade> trades;
-  private Candle? lastCandle;
+  private Candle? firstCandle = null;
+  private Candle? lastCandle = null;
 
   public Trader(
     ICandleLoader loader,
@@ -43,8 +44,16 @@ public abstract class Trader {
         }
         trades.Add(trade.Value);
       }
+
+      ProcessMetrics(candle, trade);
     }
 
     lastCandle = candle;
+  }
+
+  protected void ProcessMetrics(Candle candle, Trade? trade) {
+    if (!firstCandle.HasValue || !lastCandle.HasValue) {
+      return;
+    }
   }
 }

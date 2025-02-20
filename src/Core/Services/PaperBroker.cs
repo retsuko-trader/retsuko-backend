@@ -199,6 +199,10 @@ public class PaperBroker: IBroker, ISerializable {
     portfolio.totalBalance = totalBalance(close);
   }
 
+  public Portfolio GetPortfolio() {
+    return portfolio;
+  }
+
   public string Serialize() {
     return JsonSerializer.Serialize(new {
       config,
