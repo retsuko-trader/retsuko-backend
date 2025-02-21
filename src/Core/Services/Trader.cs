@@ -35,20 +35,27 @@ public abstract class Trader {
     }
 
     var candle = await loader.LoadOne();
+    if (!firstCandle.HasValue) {
+      firstCandle = candle;
+    }
+
     var signal = await strategy.Update(candle);
     if (signal != null) {
       var trade = await broker.HandleAdvice(candle, signal);
       if (trade.HasValue) {
-        var lastTrade = trades[^1];
+        if (trades.Count > 0) {
+          var lastTrade = trades[^1];
 
-        if (lastTrade.signal == SignalKind.@long || lastTrade.signal == SignalKind.@short) {
-          var currBalance = trade.Value.TotalBalance;
-          var prevBalance = lastTrade.TotalBalance;
-          var profit = (currBalance - prevBalance) / prevBalance;
+          if (lastTrade.signal == SignalKind.@long || lastTrade.signal == SignalKind.@short) {
+            var currBalance = trade.Value.TotalBalance;
+            var prevBalance = lastTrade.TotalBalance;
+            var profit = (currBalance - prevBalance) / prevBalance;
 
-          lastTrade.profit = profit;
-          trades[^1] = lastTrade;
+            lastTrade.profit = profit;
+            trades[^1] = lastTrade;
+          }
         }
+
         trades.Add(trade.Value);
       }
 

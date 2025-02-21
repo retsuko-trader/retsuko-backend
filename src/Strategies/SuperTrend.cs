@@ -18,8 +18,6 @@ public class SuperTrendStrategy: Strategy<SuperTrendStrategyConfig>, IStrategyCr
     double superTrend
 ) {}
 
-  private SuperTrendStrategyConfig config;
-
   private IIndicator atr;
   private State trend;
   private State lastTrend;
@@ -29,10 +27,10 @@ public class SuperTrendStrategy: Strategy<SuperTrendStrategyConfig>, IStrategyCr
   private double prevBuyConfidence;
 
   public static string DefaultConfig => JsonSerializer.Serialize(new SuperTrendStrategyConfig {
-    AtrPeriod = 10,
-    BandFactor = 1.5f,
-    TrailingStop = 1.5f,
-    ConfidenceMultiplier = 1.5f,
+    AtrPeriod = 7,
+    BandFactor = 7,
+    TrailingStop = 3.5f,
+    ConfidenceMultiplier = 20,
     ConfidenceBias = 0.1f,
   });
 
@@ -41,8 +39,6 @@ public class SuperTrendStrategy: Strategy<SuperTrendStrategyConfig>, IStrategyCr
   }
 
   public SuperTrendStrategy(SuperTrendStrategyConfig config): base(config) {
-    this.config = config;
-
     atr = AddIndicator(Indicators.ATR(config.AtrPeriod));
     trend = new State(0, 0, 0, 0, 0);
     lastTrend = new State(0, 0, 0, 0, 0);
@@ -64,8 +60,8 @@ public class SuperTrendStrategy: Strategy<SuperTrendStrategyConfig>, IStrategyCr
     }
 
     if (candle.close > trend.superTrend) {
-      var conf = Math.Min(1, confidence * config.ConfidenceMultiplier);
-      if (conf - prevBuyConfidence < config.ConfidenceBias) {
+      var conf = Math.Min(1, confidence * Config.ConfidenceMultiplier);
+      if (conf - prevBuyConfidence < Config.ConfidenceBias) {
         return null;
       }
 
@@ -85,14 +81,14 @@ public class SuperTrendStrategy: Strategy<SuperTrendStrategyConfig>, IStrategyCr
     var atr = this.atr.Value;
     age += 1;
 
-    if (age < config.AtrPeriod) {
+    if (age < Config.AtrPeriod) {
       return false;
     }
 
     var close = candle.close;
 
-    trend.upperBandBasic = (candle.high + candle.low) / 2 + atr * config.BandFactor;
-    trend.lowerBandBasic = (candle.high + candle.low) / 2 - atr * config.BandFactor;
+    trend.upperBandBasic = (candle.high + candle.low) / 2 + atr * Config.BandFactor;
+    trend.lowerBandBasic = (candle.high + candle.low) / 2 - atr * Config.BandFactor;
 
     if (trend.upperBandBasic < lastTrend.upperBand || lastClose > lastTrend.upperBand) {
       trend.upperBand = trend.upperBandBasic;

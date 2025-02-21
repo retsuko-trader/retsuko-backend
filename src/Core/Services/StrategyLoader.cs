@@ -1,12 +1,13 @@
-record StrategyInfo(
+public record StrategyInfo(
   string Name,
   string Config,
   Func<string, IStrategy> CreateFn
 );
 
 public static class StrategyLoader {
-  private static readonly StrategyInfo[] strategies = [
+  public static readonly StrategyInfo[] strategies = [
     new StrategyInfo("SuperTrend", SuperTrendStrategy.DefaultConfig, SuperTrendStrategy.Create),
+    new StrategyInfo("Turtle", TurtleStrategy.DefaultConfig, TurtleStrategy.Create),
   ];
 
   public static IEnumerable<string> GetStrategyNames() {

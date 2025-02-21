@@ -20,7 +20,7 @@ public ref struct MetricsHelper {
     this.firstCandle = firstCandle;
     this.lastCandle = lastCandle;
 
-    days = (lastCandle.ts - firstCandle.ts).Days;
+    days = Math.Max(1, (lastCandle.ts - firstCandle.ts).Days);
   }
 
   public double cagr() {
