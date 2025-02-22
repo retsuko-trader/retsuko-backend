@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 
 [Route("backtest")]
@@ -11,7 +12,10 @@ public class BacktestController: Controller {
     )));
   }
 
-  public record SingleBacktestRunRequest(BacktestConfig config);
+  public record SingleBacktestRunRequest(
+    [Required] BacktestConfig config,
+    bool hideTrades = false
+  );
 
   [HttpPost("single/run")]
   public async Task<IActionResult> RunSingle([FromBody]SingleBacktestRunRequest req) {
@@ -22,6 +26,11 @@ public class BacktestController: Controller {
       await backtester.Tick();
     }
 
-    return Ok(backtester.GetReport());
+    var report = backtester.GetReport();
+    if (req.hideTrades) {
+      return Ok(report with { trades = [] });
+    }
+
+    return Ok(report);
   }
 }

@@ -19,6 +19,7 @@ public class SuperTrendStrategy: Strategy<SuperTrendStrategyConfig>, IStrategyCr
 ) {}
 
   private IIndicator atr;
+  private TrailingStopLoss stopLoss;
   private State trend;
   private State lastTrend;
   private double lastClose;
@@ -42,6 +43,7 @@ public class SuperTrendStrategy: Strategy<SuperTrendStrategyConfig>, IStrategyCr
     atr = AddIndicator(Indicators.ATR(config.AtrPeriod));
     trend = new State(0, 0, 0, 0, 0);
     lastTrend = new State(0, 0, 0, 0, 0);
+    stopLoss = new TrailingStopLoss(config.TrailingStop);
   }
 
   public override async Task Preload(IEnumerable<Candle> candles) {
@@ -59,7 +61,13 @@ public class SuperTrendStrategy: Strategy<SuperTrendStrategyConfig>, IStrategyCr
       return null;
     }
 
+    if (stopLoss.IsTriggered(candle.close)) {
+      stopLoss.End();
+      return Signal.closeLong;
+    }
+
     if (candle.close > trend.superTrend) {
+      stopLoss.Begin(candle.close);
       var conf = Math.Min(1, confidence * Config.ConfidenceMultiplier);
       if (conf - prevBuyConfidence < Config.ConfidenceBias) {
         return null;
@@ -70,6 +78,7 @@ public class SuperTrendStrategy: Strategy<SuperTrendStrategyConfig>, IStrategyCr
     }
 
     if (candle.close < trend.superTrend) {
+      stopLoss.End();
       prevBuyConfidence = 0;
       return Signal.@short;
     }
@@ -104,16 +113,16 @@ public class SuperTrendStrategy: Strategy<SuperTrendStrategyConfig>, IStrategyCr
 
     if (lastTrend.superTrend == lastTrend.upperBand && close <= trend.upperBand) {
       trend.superTrend = trend.upperBand;
-      confidence = (trend.upperBand - close) / (close * atr);
+      confidence = (trend.upperBand - close) / close;
     } else if (lastTrend.superTrend == lastTrend.upperBand && close >= trend.upperBand) {
       trend.superTrend = trend.lowerBand;
-      confidence = (close - trend.lowerBand) / (close * atr);
+      confidence = (close - trend.lowerBand) / close;
     } else if (lastTrend.superTrend == lastTrend.lowerBand && close >= trend.lowerBand) {
       trend.superTrend = trend.lowerBand;
-      confidence = (close - trend.lowerBand) / (close * atr);
+      confidence = (close - trend.lowerBand) / close;
     } else if (lastTrend.superTrend == lastTrend.lowerBand && close <= trend.lowerBand) {
       trend.superTrend = trend.upperBand;
-      confidence = (trend.upperBand - close) / (close * atr);
+      confidence = (trend.upperBand - close) / close;
     } else {
       trend.superTrend = 0;
     }
@@ -132,6 +141,7 @@ public class SuperTrendStrategy: Strategy<SuperTrendStrategyConfig>, IStrategyCr
       age,
       confidence,
       prevBuyConfidence,
+      stopLoss = stopLoss.Serialize()
     });
   }
 
@@ -148,5 +158,6 @@ public class SuperTrendStrategy: Strategy<SuperTrendStrategyConfig>, IStrategyCr
     age = parsed.age;
     confidence = parsed.confidence;
     prevBuyConfidence = parsed.prevBuyConfidence;
+    stopLoss.Deserialize(parsed.stopLoss);
   }
 }
