@@ -28,6 +28,6 @@ public record struct TraderMetrics(
   double marketChange
 ) {
   public static TraderMetrics Empty => new(
-    0, 0, 0, 0, 0, 0, 0, 0, DateTime.MinValue, 0, DateTime.MinValue, 0, 0, 0, DateTime.MinValue, DateTime.MinValue, 0
+    0, 0, 0, 0, 0, 0, 0, double.MaxValue, DateTime.MinValue, 0, DateTime.MinValue, 0, 0, 0, DateTime.MinValue, DateTime.MinValue, 0
   );
 }
