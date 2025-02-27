@@ -29,7 +29,7 @@ public class SuperTrendStrategy: Strategy<SuperTrendStrategyConfig>, IStrategyCr
 
   public static string DefaultConfig => JsonSerializer.Serialize(new SuperTrendStrategyConfig {
     AtrPeriod = 7,
-    BandFactor = 7,
+    BandFactor = 3,
     TrailingStop = 3.5f,
     ConfidenceMultiplier = 20,
     ConfidenceBias = 0.1f,
@@ -63,6 +63,7 @@ public class SuperTrendStrategy: Strategy<SuperTrendStrategyConfig>, IStrategyCr
 
     if (stopLoss.IsTriggered(candle.close)) {
       stopLoss.End();
+      prevBuyConfidence = 0;
       return Signal.closeLong;
     }
 

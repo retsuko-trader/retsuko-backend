@@ -1,3 +1,5 @@
+using Binance.Net.Enums;
+
 public enum Market {
   futures,
   spot,
@@ -6,6 +8,7 @@ public enum Market {
 public record struct Candle(
   Market market,
   string symbol,
+  KlineInterval interval,
   DateTime ts,
   double open,
   double high,
@@ -14,11 +17,12 @@ public record struct Candle(
   double volume
 ) {
 
-  public static Candle From(Market market, string symbol, Binance.Net.Interfaces.IBinanceKline kline) {
+  public static Candle From(Market market, string symbol, KlineInterval interval, Binance.Net.Interfaces.IBinanceKline kline) {
     return new Candle(
       market,
       symbol,
-      kline.CloseTime,
+      interval,
+      kline.OpenTime,
       (double)kline.OpenPrice,
       (double)kline.HighPrice,
       (double)kline.LowPrice,
@@ -28,10 +32,11 @@ public record struct Candle(
   }
 
 
-  public static Candle From(Market market, string symbol, System.Data.Common.DbDataReader reader) {
+  public static Candle From(Market market, string symbol, KlineInterval interval, System.Data.Common.DbDataReader reader) {
     return new Candle(
       market,
       symbol,
+      interval,
       reader.GetDateTime(0),
       reader.GetDouble(1),
       reader.GetDouble(2),
@@ -44,6 +49,7 @@ public record struct Candle(
   public void AppendRow(DuckDB.NET.Data.IDuckDBAppenderRow row) {
     row.AppendValue(market.ToString())
       .AppendValue(symbol)
+      .AppendValue((int)interval)
       .AppendValue(ts)
       .AppendValue(open)
       .AppendValue(high)

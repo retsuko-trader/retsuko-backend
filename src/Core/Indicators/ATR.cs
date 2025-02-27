@@ -23,30 +23,28 @@ public partial class Indicators {
     }
 
     public void Update(Candle candle) {
-      age += 1;
+      highs.GetByMod(age) = candle.high;
+      lows.GetByMod(age) = candle.low;
+      closes.GetByMod(age) = candle.close;
 
-      highs[age % period] = candle.high;
-      lows[age % period] = candle.low;
-      closes[age % period] = candle.close;
-
-      var sum = candle.high - candle.low;
+      var sum = highs.GetByMod(age + 1) - lows.GetByMod(age + 1);
       for (var i = 1; i < period; i++) {
-        sum += CalcTrueRange(age + i);
+        sum += CalcTrueRange(age + i + 1);
       }
 
       Value = sum / period;
 
-      if (!Ready && age >= period) {
-        if (age == period - 1) {
-          Ready = true;
-        }
+      if (!Ready && age + 1 >= period) {
+        Ready = true;
       }
+
+      age += 1;
     }
 
     private double CalcTrueRange(int i) {
-      var l = lows[i % period];
-      var h = highs[i % period];
-      var c = closes[(i - 1) % period];
+      var l = lows.GetByMod(i);
+      var h = highs.GetByMod(i);
+      var c = closes.GetByMod(i - 1);
       var ych = Math.Abs(h - c);
       var ycl = Math.Abs(l - c);
       var v = h - l;

@@ -1,7 +1,9 @@
+using Binance.Net.Enums;
+
 public record struct DatasetConfig(
   Market market,
   string symbol,
-  int interval,
+  KlineInterval interval,
   DateTime start,
   DateTime end
 ) {
