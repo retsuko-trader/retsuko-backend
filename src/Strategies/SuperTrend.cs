@@ -1,13 +1,13 @@
 using System.Dynamic;
 using System.Text.Json;
 
-public record struct SuperTrendStrategyConfig {
-  public int AtrPeriod { get; init; }
-  public float BandFactor { get; init; }
-  public float TrailingStop { get; init; }
-  public float ConfidenceMultiplier { get; init; }
-  public float ConfidenceBias { get; init; }
-}
+public record struct SuperTrendStrategyConfig(
+  int atrPeriod,
+  float bandFactor,
+  float trailingStop,
+  float confidenceMultiplier,
+  float confidenceBias
+);
 
 public class SuperTrendStrategy: Strategy<SuperTrendStrategyConfig>, IStrategyCreate<SuperTrendStrategy> {
   record struct State(
@@ -28,11 +28,11 @@ public class SuperTrendStrategy: Strategy<SuperTrendStrategyConfig>, IStrategyCr
   private double prevBuyConfidence;
 
   public static string DefaultConfig => JsonSerializer.Serialize(new SuperTrendStrategyConfig {
-    AtrPeriod = 7,
-    BandFactor = 3,
-    TrailingStop = 3.5f,
-    ConfidenceMultiplier = 20,
-    ConfidenceBias = 0.1f,
+    atrPeriod = 7,
+    bandFactor = 3,
+    trailingStop = 3.5f,
+    confidenceMultiplier = 20,
+    confidenceBias = 0.1f,
   });
 
   public static SuperTrendStrategy Create(string config) {
@@ -40,10 +40,10 @@ public class SuperTrendStrategy: Strategy<SuperTrendStrategyConfig>, IStrategyCr
   }
 
   public SuperTrendStrategy(SuperTrendStrategyConfig config): base(config) {
-    atr = AddIndicator(Indicators.ATR(config.AtrPeriod));
+    atr = AddIndicator(Indicators.ATR(config.atrPeriod));
     trend = new State(0, 0, 0, 0, 0);
     lastTrend = new State(0, 0, 0, 0, 0);
-    stopLoss = new TrailingStopLoss(config.TrailingStop);
+    stopLoss = new TrailingStopLoss(config.trailingStop);
   }
 
   public override async Task Preload(IEnumerable<Candle> candles) {
@@ -69,8 +69,8 @@ public class SuperTrendStrategy: Strategy<SuperTrendStrategyConfig>, IStrategyCr
 
     if (candle.close > trend.superTrend) {
       stopLoss.Begin(candle.close);
-      var conf = Math.Min(1, confidence * Config.ConfidenceMultiplier);
-      if (conf - prevBuyConfidence < Config.ConfidenceBias) {
+      var conf = Math.Min(1, confidence * Config.confidenceMultiplier);
+      if (conf - prevBuyConfidence < Config.confidenceBias) {
         return null;
       }
 
@@ -91,14 +91,14 @@ public class SuperTrendStrategy: Strategy<SuperTrendStrategyConfig>, IStrategyCr
     var atr = this.atr.Value;
     age += 1;
 
-    if (age < Config.AtrPeriod) {
+    if (age < Config.atrPeriod) {
       return false;
     }
 
     var close = candle.close;
 
-    trend.upperBandBasic = (candle.high + candle.low) / 2 + atr * Config.BandFactor;
-    trend.lowerBandBasic = (candle.high + candle.low) / 2 - atr * Config.BandFactor;
+    trend.upperBandBasic = (candle.high + candle.low) / 2 + atr * Config.bandFactor;
+    trend.lowerBandBasic = (candle.high + candle.low) / 2 - atr * Config.bandFactor;
 
     if (trend.upperBandBasic < lastTrend.upperBand || lastClose > lastTrend.upperBand) {
       trend.upperBand = trend.upperBandBasic;

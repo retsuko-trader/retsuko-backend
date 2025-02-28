@@ -8,6 +8,7 @@ public static class StrategyLoader {
   public static readonly StrategyInfo[] strategies = [
     new StrategyInfo("SuperTrend", SuperTrendStrategy.DefaultConfig, SuperTrendStrategy.Create),
     new StrategyInfo("Turtle", TurtleStrategy.DefaultConfig, TurtleStrategy.Create),
+    new StrategyInfo("SuperTrendTurtle", SuperTrendTurtleStrategy.DefaultConfig, SuperTrendTurtleStrategy.Create),
   ];
 
   public static IEnumerable<string> GetStrategyNames() {

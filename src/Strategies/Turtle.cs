@@ -6,7 +6,7 @@ public record struct TurtleStrategyConfig(
   int exitFast,
   int enterSlow,
   int exitSlow,
-  double trailingStop
+  int bullPeriod
 );
 
 public class TurtleStrategy: Strategy<TurtleStrategyConfig>, IStrategyCreate<TurtleStrategy> {
@@ -22,13 +22,14 @@ public class TurtleStrategy: Strategy<TurtleStrategyConfig>, IStrategyCreate<Tur
   private Candle[] candles;
   private int age;
   private int candlesLength;
+  private IIndicator sma;
 
   public static string DefaultConfig => JsonSerializer.Serialize(new TurtleStrategyConfig {
     enterFast = 20,
     exitFast = 10,
     enterSlow = 55,
     exitSlow = 20,
-    trailingStop = 15
+    bullPeriod = 50,
   });
 
   public static TurtleStrategy Create(string config) {
@@ -41,6 +42,7 @@ public class TurtleStrategy: Strategy<TurtleStrategyConfig>, IStrategyCreate<Tur
       Math.Max(config.enterSlow, config.exitSlow)
     );
     candles = new Candle[candlesLength];
+    sma = AddIndicator(Indicators.SMA(config.bullPeriod));
   }
 
   public override async Task<Signal?> Update(Candle candle) {
@@ -50,6 +52,14 @@ public class TurtleStrategy: Strategy<TurtleStrategyConfig>, IStrategyCreate<Tur
 
     if (!status.HasValue) {
       return null;
+    }
+
+    if (!sma.Ready) {
+      return null;
+    }
+
+    if (candle.close < sma.Value) {
+      return Signal.closeLong;
     }
 
     if (status == Result.OPEN_FLONG || status == Result.OPEN_SLONG) {
@@ -63,7 +73,7 @@ public class TurtleStrategy: Strategy<TurtleStrategyConfig>, IStrategyCreate<Tur
   }
 
   private Result? UpdateInner(Candle candle) {
-    candles[age % candlesLength] = candle;
+    candles.GetByMod(age) = candle;
     age += 1;
 
     var price = candle.close;
@@ -99,13 +109,13 @@ public class TurtleStrategy: Strategy<TurtleStrategyConfig>, IStrategyCreate<Tur
 
   private (double high, double low) calculateBreakout(int count) {
     var candle = candles.GetByMod(age - count);
-    var high = candle.high;
-    var low = candle.low;
+    var high = candle.close;
+    var low = candle.close;
 
-    for (var i = 1; i < count; i++) {
+    for (var i = 0; i < count; i++) {
       candle = candles.GetByMod(age - i);
-      high = Math.Max(high, candle.high);
-      low = Math.Min(low, candle.low);
+      high = Math.Max(high, candle.close);
+      low = Math.Min(low, candle.close);
     }
 
     return (high, low);
