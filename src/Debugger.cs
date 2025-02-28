@@ -1,6 +1,6 @@
 public static class Debugger {
   public static void DebugATR() {
-    var atr = new Indicators.ATRIndicator(5);
+    var atr = Indicators.ATR(5);
     var update = (double high, double low, double close) => {
       atr.Update(new Candle(Market.futures, "", Binance.Net.Enums.KlineInterval.OneMinute, DateTime.Now, 0, high, low, close, 0));
       return atr;
@@ -32,10 +32,32 @@ public static class Debugger {
     return;
   }
 
+  public static void DebugSMA() {
+    var sma = Indicators.SMA(5);
+
+    double[] data = [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+    ];
+
+    foreach (var d in data) {
+      sma.Update(new Candle(Market.futures, "", Binance.Net.Enums.KlineInterval.OneMinute, DateTime.Now, 0, 0, 0, d, 0));
+      Console.WriteLine($"{sma.Ready} {d} {sma.Value}");
+    }
+  }
+
   public static async Task DebugBacktester() {
     var trader = new Backtester(new BacktestConfig(
       new DatasetConfig(Market.futures, "BTCUSDT", Binance.Net.Enums.KlineInterval.EightHour, DateTime.Parse("2021-01-01"), DateTime.Parse("2021-01-31")),
-      new StrategyConfig("SuperTrend", StrategyLoader.GetDefaultConfig("SuperTrend")!),
+      new StrategyConfig("Turtle", StrategyLoader.GetDefaultConfig("Turtle")!),
       new PaperBrokerConfig(1000, 0.001, false, true)
     ));
 

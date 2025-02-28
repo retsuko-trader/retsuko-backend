@@ -66,7 +66,7 @@ public class TurtleStrategy: Strategy<TurtleStrategyConfig>, IStrategyCreate<Tur
       return Signal.@long;
     }
     if (status == Result.CLOSE_FAST || status == Result.CLOSE_SLOW) {
-      return Signal.@short;
+      return Signal.closeLong;
     }
 
     return null;
@@ -74,46 +74,46 @@ public class TurtleStrategy: Strategy<TurtleStrategyConfig>, IStrategyCreate<Tur
 
   private Result? UpdateInner(Candle candle) {
     candles.GetByMod(age) = candle;
-    age += 1;
 
     var price = candle.close;
     var status = (Result?)null;
 
-    if (age > Config.enterFast) {
+    if (age >= Config.enterFast) {
       var (high, _) = calculateBreakout(Config.enterFast);
       if (price == high) {
         status = Result.OPEN_FLONG;
       }
     }
-    if (age > Config.exitFast) {
+    if (age >= Config.exitFast) {
       var (_, low) = calculateBreakout(Config.exitFast);
       if (price == low) {
         status = Result.CLOSE_FAST;
       }
     }
-    if (age > Config.enterSlow) {
+    if (age >= Config.enterSlow) {
       var (high, _) = calculateBreakout(Config.enterSlow);
       if (price == high) {
         status = Result.OPEN_SLONG;
       }
     }
-    if (age > Config.exitSlow) {
+    if (age >= Config.exitSlow) {
       var (_, low) = calculateBreakout(Config.exitSlow);
       if (price == low) {
         status = Result.CLOSE_SLOW;
       }
     }
 
+    age += 1;
+
     return status;
   }
 
   private (double high, double low) calculateBreakout(int count) {
-    var candle = candles.GetByMod(age - count);
-    var high = candle.close;
-    var low = candle.close;
+    var high = double.MinValue;
+    var low = double.MaxValue;
 
     for (var i = 0; i < count; i++) {
-      candle = candles.GetByMod(age - i);
+      ref var candle = ref candles.GetByMod(age - i);
       high = Math.Max(high, candle.close);
       low = Math.Min(low, candle.close);
     }
