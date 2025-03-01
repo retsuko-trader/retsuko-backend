@@ -1,5 +1,8 @@
 using System.Dynamic;
 using System.Text.Json;
+using Retsuko.Core;
+
+namespace Retsuko.Strategies;
 
 public record struct SuperTrendTurtleStrategyConfig(
   int atrPeriod,

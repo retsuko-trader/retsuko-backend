@@ -1,3 +1,5 @@
+namespace Retsuko.Core;
+
 public record struct PaperBrokerConfig(
   double initialBalance,
   double fee,

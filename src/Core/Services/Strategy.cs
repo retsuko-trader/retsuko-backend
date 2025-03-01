@@ -1,3 +1,5 @@
+namespace Retsuko.Core;
+
 public abstract class Strategy<TConfig>: IStrategy, ISerializable where TConfig: struct {
   public TConfig Config { get; protected set; }
 

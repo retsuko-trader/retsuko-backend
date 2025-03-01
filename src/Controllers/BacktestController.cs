@@ -1,5 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
+using Retsuko.Core;
+
+namespace Retsuko.Controllers;
 
 [Route("backtest")]
 public class BacktestController: Controller {
@@ -19,12 +22,18 @@ public class BacktestController: Controller {
 
   [HttpPost("single/run")]
   public async Task<IActionResult> RunSingle([FromBody]SingleBacktestRunRequest req) {
+    var tracer = MyTracer.Tracer;
     var backtester = new Backtester(req.config);
 
-    await backtester.Init();
+    using (var init = tracer.StartActiveSpan("Backtester.Init")) {
+      await backtester.Init();
+    }
+
+    var run = tracer.StartActiveSpan("Backtester.Run");
     while (!backtester.IsEnded) {
       await backtester.Tick();
     }
+    run.End();
 
     var report = backtester.GetReport();
     if (req.hideTrades) {

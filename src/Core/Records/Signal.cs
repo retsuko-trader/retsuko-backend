@@ -1,3 +1,5 @@
+namespace Retsuko.Core;
+
 public enum SignalKind {
   @long,
   @short,

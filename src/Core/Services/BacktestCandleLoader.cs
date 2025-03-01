@@ -1,3 +1,5 @@
+namespace Retsuko.Core;
+
 using System.Data.Common;
 using DuckDB.NET.Data;
 using Retsuko;

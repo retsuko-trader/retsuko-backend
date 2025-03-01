@@ -1,5 +1,7 @@
 using Binance.Net.Enums;
 
+namespace Retsuko;
+
 public enum Market {
   futures,
   spot,

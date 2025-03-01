@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using Retsuko;
+using Retsuko.Core;
+
+namespace Retsuko.Controllers;
 
 [Route("candle")]
 public class CandleController : Controller {

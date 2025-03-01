@@ -1,3 +1,5 @@
+namespace Retsuko.Core;
+
 public interface ICandleLoader {
   public Task<bool> Init();
 

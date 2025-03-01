@@ -1,3 +1,7 @@
+using Retsuko;
+using Retsuko.Core;
+using Retsuko.Core.Indicators;
+
 public static class Debugger {
   public static void DebugATR() {
     var atr = Indicators.ATR(5);

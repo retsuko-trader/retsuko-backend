@@ -1,3 +1,5 @@
+namespace Retsuko.Core;
+
 public interface IStrategy: ISerializable {
   Task Preload(IEnumerable<Candle> candles);
 

@@ -1,3 +1,5 @@
+namespace Retsuko.Core;
+
 public abstract class Trader {
   public ICandleLoader loader { get; protected set; }
   public IStrategy strategy { get; protected set; }

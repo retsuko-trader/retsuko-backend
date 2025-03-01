@@ -1,6 +1,8 @@
 using System.Dynamic;
 using System.Text.Json;
 
+namespace Retsuko.Core.Indicators;
+
 public partial class Indicators {
   public class SMAIndicator: IIndicator {
     public bool Ready { get; protected set; }

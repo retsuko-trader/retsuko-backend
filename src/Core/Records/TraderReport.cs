@@ -1,3 +1,5 @@
+namespace Retsuko.Core;
+
 public record struct TraderReport(
   BacktestConfig config,
   double startBalance,

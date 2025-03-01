@@ -1,3 +1,5 @@
+namespace Retsuko.Core;
+
 public class Backtester: Trader {
   private readonly BacktestConfig config;
 

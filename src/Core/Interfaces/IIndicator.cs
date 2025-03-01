@@ -1,3 +1,5 @@
+namespace Retsuko.Core;
+
 public interface IIndicator : ISerializable {
   public bool Ready { get; }
   public double Value { get; }

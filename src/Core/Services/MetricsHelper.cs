@@ -1,3 +1,5 @@
+namespace Retsuko.Core;
+
 public ref struct MetricsHelper {
   double initialBalance;
   ref Portfolio portfolio;

@@ -1,5 +1,9 @@
 using System.Dynamic;
 using System.Text.Json;
+using Retsuko.Core;
+using Retsuko.Core.Indicators;
+
+namespace Retsuko.Strategies;
 
 public record struct TurtleStrategyConfig(
   int enterFast,

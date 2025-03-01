@@ -1,3 +1,7 @@
+using Retsuko.Strategies;
+
+namespace Retsuko.Core;
+
 public record StrategyInfo(
   string Name,
   string Config,

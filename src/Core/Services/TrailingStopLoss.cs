@@ -1,6 +1,8 @@
 using System.Dynamic;
 using System.Text.Json;
 
+namespace Retsuko.Core;
+
 public class TrailingStopLoss: ISerializable {
   protected double percentage;
 

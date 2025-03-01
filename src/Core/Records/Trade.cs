@@ -1,3 +1,5 @@
+namespace Retsuko.Core;
+
 public record struct Trade(
   DateTime ts,
   SignalKind signal,
