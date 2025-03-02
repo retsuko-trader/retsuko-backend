@@ -19,7 +19,8 @@ builder.Logging.AddOpenTelemetry(options => {
 builder.Services.AddOpenTelemetry()
   .ConfigureResource(resource => resource.AddService(SERVICE_NAME))
   .WithTracing(tracing => tracing
-    .AddSource("Retsuko")
+    .AddSource(SERVICE_NAME)
+    .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(SERVICE_NAME))
     .AddAspNetCoreInstrumentation()
     .AddOtlpExporter(otlp => {
       otlp.Endpoint = new Uri("http://localhost:4317");
