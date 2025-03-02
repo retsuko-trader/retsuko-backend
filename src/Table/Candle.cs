@@ -18,6 +18,7 @@ public record struct Candle(
   double close,
   double volume
 ) {
+  public static string TableName => "candle";
 
   public static Candle From(Market market, string symbol, KlineInterval interval, Binance.Net.Interfaces.IBinanceKline kline) {
     return new Candle(
@@ -59,6 +60,27 @@ public record struct Candle(
       .AppendValue(close)
       .AppendValue(volume)
       .EndRow();
+  }
+
+  public static async Task<List<Dataset>> GetDataset() {
+    var command = Database.Candle.CreateCommand();
+
+    command.CommandText = "SELECT market, symbol, interval, min(ts), max(ts), count(ts) FROM candle GROUP BY market, symbol, interval";
+    var reader = await command.ExecuteReaderAsync();
+    var result = new List<Dataset>();
+    while (reader.Read()) {
+      var market = reader.GetString(0);
+      var symbol = reader.GetString(1);
+      var interval = reader.GetInt32(2);
+      var start = reader.GetDateTime(3);
+      var end = reader.GetDateTime(4);
+      var count = reader.GetInt32(5);
+
+      var dataset = new Dataset(Enum.Parse<Market>(market), symbol, interval, start, end, count);
+      result.Add(dataset);
+    }
+
+    return result;
   }
 }
 
