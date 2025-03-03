@@ -7,6 +7,9 @@ namespace Retsuko.Controllers;
 public class CandleController : Controller {
   [HttpGet]
   public async Task<IActionResult> GetDataset() {
+
+    var tracer = MyTracer.Tracer;
+    using var datasetSpan = tracer.StartActiveSpan("Downloader.GetDataset");
     var command = Database.Candle.CreateCommand();
 
     command.CommandText = "SELECT market, symbol, interval, min(ts), max(ts), count(ts) FROM candle GROUP BY market, symbol, interval";
@@ -23,7 +26,9 @@ public class CandleController : Controller {
       var dataset = new Dataset(Enum.Parse<Market>(market), symbol, interval, start, end, count);
       result.Add(dataset);
     }
+    datasetSpan.End();
 
+    using var exchangeSpan = tracer.StartActiveSpan("Broker.GetExchangeInfo");
     var info = await Broker.API.ExchangeData.GetExchangeInfoAsync();
     var symbols = info.Data.Symbols.ToArray();
     result.Sort((a, b) => {
@@ -40,6 +45,7 @@ public class CandleController : Controller {
 
       return a.interval - b.interval;
     });
+    exchangeSpan.End();
 
     return Ok(result);
   }
@@ -49,5 +55,12 @@ public class CandleController : Controller {
     var info = await Broker.API.ExchangeData.GetExchangeInfoAsync();
 
     return Ok(info.Data.Symbols);
+  }
+
+  [HttpPost("update")]
+  public async Task<IActionResult> Update() {
+    await Downloader.UpdateAll();
+
+    return Ok();
   }
 }
