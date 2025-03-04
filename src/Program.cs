@@ -42,5 +42,7 @@ builder.Services.AddMvc()
 
 var app = builder.Build();
 
+MyLogger.Logger = app.Logger;
+
 app.MapControllerRoute("default", "{controller=Home}/{action=Index}/{id?}");
 app.Run();

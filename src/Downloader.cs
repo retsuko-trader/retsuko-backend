@@ -28,29 +28,19 @@ public static class Downloader {
     var exchanges = await api.GetExchangeInfoAsync();
     var symbols = exchanges.Data.Symbols.ToArray();
 
-    void Insert(Market market, string symbol, KlineInterval interval, IEnumerable<Binance.Net.Interfaces.IBinanceKline> candles) {
-      using var appender = Database.Candle.CreateAppender("candle");
-
-      foreach (var kline in candles) {
-        var candle = Candle.From(market, symbol, interval, kline);
-        var row = appender.CreateRow();
-        candle.AppendRow(row);
-      }
-    }
-
     foreach (var symbol in symbols) {
       foreach (var interval in intervals) {
         try {
-          Console.WriteLine($"Start downloading {symbol.Name} {interval} candles");
+          MyLogger.Logger.LogInformation("Start downloading {symbol} {interval} candles", symbol.Name, interval);
 
           await DownloadCandles(symbol.Name, interval, null);
         } catch (Exception ex) {
-          Console.WriteLine($"Error downloading {symbol.Name} {interval} candles: {ex.Message}");
+          MyLogger.Logger.LogError(ex, "Error downloading {symbol} {interval}", symbol.Name, interval);
         }
       }
     }
 
-    Console.WriteLine("Download complete");
+    MyLogger.Logger.LogInformation("Download complete");
   }
 
   public static async Task UpdateAll() {
@@ -60,16 +50,17 @@ public static class Downloader {
     datasetSpan.End();
 
 
-    await Parallel.ForEachAsync(datasets, new ParallelOptions { MaxDegreeOfParallelism = 4 }, async (dataset, t) => {
-      using var span = tracer.StartActiveSpan("Downloader.DownloadCandles");
-      span.SetAttribute("symbol", dataset.symbol);
-      span.SetAttribute("interval", dataset.interval.ToString());
-      span.SetAttribute("start", dataset.end.ToString());
-
+    using var span = tracer.StartActiveSpan("Downloader.DownloadCandles");
+    await Parallel.ForEachAsync(datasets, new ParallelOptions { MaxDegreeOfParallelism = 2 }, async (dataset, t) => {
+      var attributes = new OpenTelemetry.Trace.SpanAttributes(new Dictionary<string, object?> {
+        { "symbol", dataset.symbol },
+        { "interval", dataset.interval },
+        { "end", dataset.end }
+      });
+      span.AddEvent("DownloadCandles", DateTimeOffset.Now, attributes);
       await DownloadCandles(dataset.symbol, (KlineInterval)dataset.interval, dataset.end);
-
-      span.End();
     });
+    span.End();
   }
 
   static async Task DownloadCandles(string symbol, KlineInterval interval, DateTime? start) {
@@ -83,7 +74,7 @@ public static class Downloader {
           var row = appender.CreateRow();
           candle.AppendRow(row);
         } catch (Exception ex) {
-          Console.Error.WriteLine($"Error inserting {symbol} {interval} candle: {ex.Message}");
+          MyLogger.Logger.LogError(ex, "Error inserting {symbol} {interval} candle", symbol, interval);
         }
       }
     }
@@ -101,7 +92,7 @@ public static class Downloader {
     }
 
     start = await GetStart();
-    Console.WriteLine($"Start downloading {symbol} {interval}: {origStart} => {start}");
+    MyLogger.Logger.LogInformation("Start downloading {symbol} {interval}: {origStart} => {start}", symbol, interval, origStart, start);
     if (!start.HasValue) {
       return;
     }
