@@ -57,8 +57,9 @@ public static class Downloader {
         { "interval", dataset.interval },
         { "end", dataset.end }
       });
-      span.AddEvent("DownloadCandles", DateTimeOffset.Now, attributes);
+      using var ev = span.AddEvent("DownloadCandles", default, attributes);
       await DownloadCandles(dataset.symbol, (KlineInterval)dataset.interval, dataset.end);
+      ev.End();
     });
     span.End();
   }
