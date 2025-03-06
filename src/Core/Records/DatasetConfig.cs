@@ -4,7 +4,7 @@ namespace Retsuko.Core;
 
 public record struct DatasetConfig(
   Market market,
-  string symbol,
+  int symbolId,
   KlineInterval interval,
   DateTime start,
   DateTime end

@@ -4,8 +4,9 @@ using System.Data.Common;
 using DuckDB.NET.Data;
 using Retsuko;
 
-public class BacktestCandleLoader: ICandleLoader {
+public class BacktestCandleLoader: ICandleLoader, IDisposable {
   private DatasetConfig config;
+  private DuckDBConnection db;
   private DbDataReader reader;
 
   public BacktestCandleLoader(DatasetConfig config) {
@@ -13,13 +14,19 @@ public class BacktestCandleLoader: ICandleLoader {
   }
 
   public async Task<bool> Init() {
+    var symbol = await Symbol.Get(config.symbolId);
+    if (symbol == null) {
+      return false;
+    }
 
-    var command = Database.Candle.CreateCommand();
+    db = Database.CreateCandleDatabase(symbol.Value.name, true);
+
+    using var command = db.CreateCommand();
     command.UseStreamingMode = true;
 
-    command.CommandText = "SELECT ts, open, high, low, close, volume FROM candle WHERE market = $market AND symbol = $symbol AND interval = $interval AND ts BETWEEN $start AND $end ORDER BY ts ASC";
-    command.Parameters.Add(new DuckDBParameter("market", config.market.ToString()));
-    command.Parameters.Add(new DuckDBParameter("symbol", config.symbol));
+    command.CommandText = "SELECT ts, open, high, low, close, volume FROM candle WHERE market = $market AND symbolId = $symbolId AND interval = $interval AND ts BETWEEN $start AND $end ORDER BY ts ASC";
+    command.Parameters.Add(new DuckDBParameter("market", (int)config.market));
+    command.Parameters.Add(new DuckDBParameter("symbolId", config.symbolId));
     command.Parameters.Add(new DuckDBParameter("interval", config.interval));
     command.Parameters.Add(new DuckDBParameter("start", config.start));
     command.Parameters.Add(new DuckDBParameter("end", config.end));
@@ -33,6 +40,11 @@ public class BacktestCandleLoader: ICandleLoader {
   }
 
   public async Task<Candle> LoadOne() {
-    return Candle.From(config.market, config.symbol, config.interval, reader);
+    return Candle.From(config.market, config.symbolId, config.interval, reader);
+  }
+
+  public void Dispose() {
+    db.Dispose();
+    GC.SuppressFinalize(this);
   }
 }

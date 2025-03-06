@@ -23,19 +23,16 @@ public static class Downloader {
   ];
 
   public static async Task DownloadAll() {
-    var binance = new BinanceRestClient();
-    var api = binance.UsdFuturesApi.ExchangeData;
-    var exchanges = await api.GetExchangeInfoAsync();
-    var symbols = exchanges.Data.Symbols.ToArray();
+    var symbols = await Symbol.List();
 
     foreach (var symbol in symbols) {
       foreach (var interval in intervals) {
         try {
-          MyLogger.Logger.LogInformation("Start downloading {symbol} {interval} candles", symbol.Name, interval);
+          MyLogger.Logger.LogInformation("Start downloading {symbol} {interval} candles", symbol.name, interval);
 
-          await DownloadCandles(symbol.Name, interval, null);
+          await DownloadCandles(symbol.id, interval, null);
         } catch (Exception ex) {
-          MyLogger.Logger.LogError(ex, "Error downloading {symbol} {interval}", symbol.Name, interval);
+          MyLogger.Logger.LogError(ex, "Error downloading {symbol.name} {interval}", symbol.name, interval);
         }
       }
     }
@@ -46,44 +43,51 @@ public static class Downloader {
   public static async Task UpdateAll() {
     var tracer = MyTracer.Tracer;
     using var datasetSpan = tracer.StartActiveSpan("Downloader.GetDataset");
-    var datasets = await Candle.GetDataset();
+    var datasets = await Dataset.List();
     datasetSpan.End();
 
-
     using var span = tracer.StartActiveSpan("Downloader.DownloadCandles");
-    await Parallel.ForEachAsync(datasets, new ParallelOptions { MaxDegreeOfParallelism = 2 }, async (dataset, t) => {
+    await Parallel.ForEachAsync(datasets, new ParallelOptions { MaxDegreeOfParallelism = 4 }, async (dataset, t) => {
       var attributes = new OpenTelemetry.Trace.SpanAttributes(new Dictionary<string, object?> {
-        { "symbol", dataset.symbol },
+        { "symbolId", dataset.symbolId },
         { "interval", dataset.interval },
         { "end", dataset.end }
       });
       using var ev = span.AddEvent("DownloadCandles", default, attributes);
-      await DownloadCandles(dataset.symbol, (KlineInterval)dataset.interval, dataset.end);
+      await DownloadCandles(dataset.symbolId, (KlineInterval)dataset.interval, dataset.end);
       ev.End();
     });
     span.End();
   }
 
-  static async Task DownloadCandles(string symbol, KlineInterval interval, DateTime? start) {
+  static async Task DownloadCandles(int symbolId, KlineInterval interval, DateTime? start) {
+    var symbol = await Symbol.Get(symbolId);
+    if (symbol == null) {
+      MyLogger.Logger.LogError("Symbol {symbolId} not found", symbolId);
+      return;
+    }
+    var symbolName = symbol.Value.name;
+
+    using var db = Database.CreateCandleDatabase(symbol.Value.name);
     var origStart = start;
 
-    void Insert(Market market, string symbol, KlineInterval interval, IEnumerable<Binance.Net.Interfaces.IBinanceKline> candles) {
-      using var appender = Database.Candle.CreateAppender(Candle.TableName);
-      foreach (var kline in candles) {
-        try {
-          var candle = Candle.From(market, symbol, interval, kline);
-          var row = appender.CreateRow();
-          candle.AppendRow(row);
-        } catch (Exception ex) {
-          MyLogger.Logger.LogError(ex, "Error inserting {symbol} {interval} candle", symbol, interval);
+    void Insert(Market market, int symbolId, KlineInterval interval, IEnumerable<Binance.Net.Interfaces.IBinanceKline> candles) {
+      try {
+        using var appender = db.CreateAppender(Candle.TableName);
+        foreach (var kline in candles) {
+            var candle = Candle.From(market, symbolId, interval, kline);
+            var row = appender.CreateRow();
+            candle.AppendRow(row);
         }
+      } catch (Exception ex) {
+        MyLogger.Logger.LogError(ex, "Error inserting {symbolId}({symbolName}) {interval} candle", symbolId, symbolName, interval);
       }
     }
 
     async Task<DateTime?> GetStart() {
       if (start.HasValue) {
-        var candles = await Broker.API.ExchangeData.GetKlinesAsync(symbol, interval, start, null, 2);
-        if (candles.Data.Count() <= 1) {
+        var candles = await Broker.API.ExchangeData.GetKlinesAsync(symbolName, interval, start, null, 2);
+        if (candles.Data == null || candles.Data.Count() <= 1) {
           return null;
         }
         return candles.Data.Skip(1).First().OpenTime;
@@ -99,25 +103,32 @@ public static class Downloader {
     }
 
     var api = Broker.API.ExchangeData;
-    var candles = await api.GetKlinesAsync(symbol, interval, start, null, 1000);
+    var candles = await api.GetKlinesAsync(symbolName, interval, start, null, 1000);
 
     if (!candles.Data.Any()) {
       return;
     }
 
-    Insert(Market.futures, symbol, interval, candles.Data);
+    Insert(Market.futures, symbolId, interval, candles.Data);
 
     var end = candles.Data.Last().OpenTime;
 
     while (candles.Data.Count() >= 1000) {
-      candles = await api.GetKlinesAsync(symbol, interval, end, null, 1000);
+      candles = await api.GetKlinesAsync(symbolName, interval, end, null, 1000);
 
       if (!candles.Data.Any()) {
         break;
       }
 
       end = candles.Data.Last().OpenTime;
-      Insert(Market.futures, symbol, interval, candles.Data.Skip(1));
+      Insert(Market.futures, symbolId, interval, candles.Data.Skip(1));
+    }
+
+    var dataset = await Dataset.GetFrom(db, interval);
+    try {
+      await Dataset.Upsert(dataset);
+    } catch (Exception ex) {
+      MyLogger.Logger.LogError(ex, "Error upserting {symbolId}({symbolName}) {interval} dataset: {dataset}", symbolId, symbolName, interval, dataset);
     }
   }
 }

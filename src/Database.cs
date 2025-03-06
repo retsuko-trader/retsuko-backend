@@ -8,10 +8,18 @@ public class Database {
   public static DuckDBConnection PaperTrader { get; } = CreateConnection("db/paperTraders.db");
 
 
-  private static DuckDBConnection CreateConnection(string filename) {
-    var connection = new DuckDBConnection($"Data Source={filename}");
+  public static DuckDBConnection CreateConnection(string filename, bool readOnly = false) {
+    var connectionString = $"Data Source={filename};";
+    if (readOnly) {
+      connectionString += "ACCESS_MODE=READ_ONLY";
+    }
+    var connection = new DuckDBConnection(connectionString);
     connection.Open();
 
     return connection;
+  }
+
+  public static DuckDBConnection CreateCandleDatabase(string symbol, bool readOnly = false) {
+    return CreateConnection($"db/candles/{symbol}.db", readOnly);
   }
 }

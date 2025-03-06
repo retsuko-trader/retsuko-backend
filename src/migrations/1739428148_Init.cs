@@ -1,8 +1,8 @@
-using Retsuko;
+namespace Retsuko.Migrations;
 
 public static partial class Migrations {
   public static async Task CreateCandle() {
-    var command = Database.Candle.CreateCommand();
+    using var command = Database.Candle.CreateCommand();
     command.CommandText = @"CREATE TABLE IF NOT EXISTS candle (
       market TEXT,
       symbol TEXT,
@@ -22,7 +22,7 @@ public static partial class Migrations {
   }
 
   public static async Task CreateBacktest() {
-    var command = Database.Backtest.CreateCommand();
+    using var command = Database.Backtest.CreateCommand();
     command.CommandText = @"CREATE TABLE IF NOT EXISTS backtest_run (
       id VARCHAR PRIMARY KEY,
       name TEXT NOT NULL,
@@ -66,7 +66,7 @@ public static partial class Migrations {
   }
 
   public static async Task CreatePaperTrader() {
-    var command = Database.PaperTrader.CreateCommand();
+    using var command = Database.PaperTrader.CreateCommand();
     command.CommandText = @"CREATE TABLE IF NOT EXISTS paper_trader (
       id VARCHAR PRIMARY KEY,
       name TEXT NOT NULL,

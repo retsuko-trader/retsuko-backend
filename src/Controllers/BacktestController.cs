@@ -9,7 +9,7 @@ public class BacktestController: Controller {
   [HttpGet("config")]
   public IActionResult GetConfig([FromQuery]string strategy) {
     return Ok(new SingleBacktestRunRequest(new BacktestConfig(
-      new DatasetConfig(Market.futures, "BTCUSDT", Binance.Net.Enums.KlineInterval.EightHour, DateTime.Parse("2021-01-01"), DateTime.Parse("2021-01-31")),
+      new DatasetConfig(Market.futures, 0, Binance.Net.Enums.KlineInterval.EightHour, DateTime.Parse("2021-01-01"), DateTime.Parse("2021-01-31")),
       new StrategyConfig(strategy, StrategyLoader.GetDefaultConfig(strategy)!),
       new PaperBrokerConfig(1000, 0.001, false, false)
     )));

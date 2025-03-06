@@ -9,7 +9,7 @@ public enum Market {
 
 public record struct Candle(
   Market market,
-  string symbol,
+  int symbolId,
   KlineInterval interval,
   DateTime ts,
   double open,
@@ -20,10 +20,10 @@ public record struct Candle(
 ) {
   public static string TableName => "candle";
 
-  public static Candle From(Market market, string symbol, KlineInterval interval, Binance.Net.Interfaces.IBinanceKline kline) {
+  public static Candle From(Market market, int symbolId, KlineInterval interval, Binance.Net.Interfaces.IBinanceKline kline) {
     return new Candle(
       market,
-      symbol,
+      symbolId,
       interval,
       kline.OpenTime,
       (double)kline.OpenPrice,
@@ -35,10 +35,10 @@ public record struct Candle(
   }
 
 
-  public static Candle From(Market market, string symbol, KlineInterval interval, System.Data.Common.DbDataReader reader) {
+  public static Candle From(Market market, int symbolId, KlineInterval interval, System.Data.Common.DbDataReader reader) {
     return new Candle(
       market,
-      symbol,
+      symbolId,
       interval,
       reader.GetDateTime(0),
       reader.GetDouble(1),
@@ -50,8 +50,8 @@ public record struct Candle(
   }
 
   public void AppendRow(DuckDB.NET.Data.IDuckDBAppenderRow row) {
-    row.AppendValue(market.ToString())
-      .AppendValue(symbol)
+    row.AppendValue((int)market)
+      .AppendValue(symbolId)
       .AppendValue((int)interval)
       .AppendValue(ts)
       .AppendValue(open)
@@ -63,33 +63,54 @@ public record struct Candle(
   }
 
   public static async Task<List<Dataset>> GetDataset() {
-    var command = Database.Candle.CreateCommand();
+    var symbols = await Symbol.List();
 
-    command.CommandText = "SELECT market, symbol, interval, min(ts), max(ts), count(ts) FROM candle GROUP BY market, symbol, interval";
+    var results = new List<Dataset>();
+
+    await Parallel.ForEachAsync(symbols, new ParallelOptions { MaxDegreeOfParallelism = 8 }, async (symbol, t) => {
+      var datasets = await GetDataset(symbol.name);
+
+      lock (results) {
+        results.AddRange(datasets);
+      }
+    });
+
+    results.Sort((a, b) => {
+      var cmp = a.market.CompareTo(b.market);
+      if (cmp != 0) {
+        return cmp;
+      }
+
+      cmp = a.symbolId.CompareTo(b.symbolId);
+      if (cmp != 0) {
+        return cmp;
+      }
+
+      return a.interval.CompareTo(b.interval);
+    });
+
+    return results;
+  }
+
+  public static async Task<List<Dataset>> GetDataset(string symbol) {
+    using var db = Database.CreateCandleDatabase(symbol, true);
+    using var command = db.CreateCommand();
+
+    command.CommandText = "SELECT market, symbolId, interval, min(ts), max(ts), count(ts) FROM candle GROUP BY market, symbolId, interval";
     var reader = await command.ExecuteReaderAsync();
     var result = new List<Dataset>();
     while (reader.Read()) {
-      var market = reader.GetString(0);
-      var symbol = reader.GetString(1);
+      var market = reader.GetInt32(0);
+      var symbolId = reader.GetInt32(1);
       var interval = reader.GetInt32(2);
       var start = reader.GetDateTime(3);
       var end = reader.GetDateTime(4);
       var count = reader.GetInt32(5);
 
-      var dataset = new Dataset(Enum.Parse<Market>(market), symbol, interval, start, end, count);
+      var dataset = new Dataset((Market)market, symbolId, interval, start, end, count);
       result.Add(dataset);
     }
 
     return result;
   }
-}
-
-public record struct Dataset(
-  Market market,
-  string symbol,
-  int interval,
-  DateTime start,
-  DateTime end,
-  int count
-) {
 }
