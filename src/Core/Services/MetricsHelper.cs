@@ -30,6 +30,6 @@ public ref struct MetricsHelper {
   }
 
   public double avgTrades() {
-    return metrics.totalTrades / days;
+    return (double)metrics.totalTrades / days;
   }
 }
