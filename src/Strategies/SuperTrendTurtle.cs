@@ -15,15 +15,16 @@ public record struct SuperTrendTurtleStrategyConfig(
   int exitFast,
   int enterSlow,
   int exitSlow,
-  int bullPeriod
+  int bullPeriod,
+  bool rememberSignal
 );
 
 public class SuperTrendTurtleStrategy: Strategy<SuperTrendTurtleStrategyConfig>, IStrategyCreate<SuperTrendTurtleStrategy> {
   private SuperTrendStrategy superTrend;
   private TurtleStrategy turtle;
 
-  private Signal superTrendSignal;
-  private Signal turtleSignal;
+  private Signal? superTrendSignal;
+  private Signal? turtleSignal;
 
   public static string DefaultConfig => JsonSerializer.Serialize(new SuperTrendTurtleStrategyConfig {
     atrPeriod = 7,
@@ -36,6 +37,7 @@ public class SuperTrendTurtleStrategy: Strategy<SuperTrendTurtleStrategyConfig>,
     enterSlow = 55,
     exitSlow = 20,
     bullPeriod = 50,
+    rememberSignal = false,
   });
 
   public static SuperTrendTurtleStrategy Create(string config) {
@@ -62,8 +64,20 @@ public class SuperTrendTurtleStrategy: Strategy<SuperTrendTurtleStrategyConfig>,
   public override async Task<Signal?> Update(Candle candle) {
     await base.Update(candle);
 
-    var superTrendSignal = await superTrend.Update(candle);
-    var turtleSignal = await turtle.Update(candle);
+    var newSuperTrendSignal = await superTrend.Update(candle);
+    var newTurtleSignal = await turtle.Update(candle);
+
+    if (Config.rememberSignal) {
+      superTrendSignal = newSuperTrendSignal;
+      turtleSignal = newTurtleSignal;
+    } else {
+      if (newSuperTrendSignal != null) {
+        superTrendSignal = newSuperTrendSignal;
+      }
+      if (newTurtleSignal != null) {
+        turtleSignal = newTurtleSignal;
+      }
+    }
 
     if (superTrendSignal == null || turtleSignal == null) {
       return null;
