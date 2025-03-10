@@ -39,7 +39,7 @@ builder.Services.AddSingleton(MyTracer.Tracer);
 builder.Services.AddControllers();
 builder.Services.AddMvc()
   .AddJsonOptions(options => {
-    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    // options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
   });
 
 var app = builder.Build();
