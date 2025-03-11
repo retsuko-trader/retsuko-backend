@@ -25,7 +25,7 @@ public class BulkBacktester {
   public async Task Run() {
     MyLogger.Logger.LogInformation("Bulk backtest run started for runId={run.id}", run.id);
     var tracer = MyTracer.Tracer;
-    using var rootSpan = tracer.StartRootSpan("BulkBacktester.Run");
+    using var rootSpan = tracer.StartActiveSpan("BulkBacktester.Run");
     rootSpan.SetAttribute("run.id", run.id);
     rootSpan.SetAttribute("run.name", run.name);
     rootSpan.SetAttribute("run.description", run.description);
