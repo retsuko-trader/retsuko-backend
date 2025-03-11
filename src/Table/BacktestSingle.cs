@@ -1,4 +1,5 @@
 using System.Text.Json;
+using DuckDB.NET.Data;
 
 namespace Retsuko.Core;
 
@@ -14,6 +15,33 @@ public record struct BacktestSingle(
   string metrics
 ) {
   public static string TableName => "backtest_single";
+
+  public static async Task<IReadOnlyList<BacktestSingle>> List(string runId) {
+    using var command = Database.Backtest.CreateCommand();
+    command.CommandText = $"SELECT * FROM {TableName} WHERE run_id = $runId";
+    command.Parameters.Add(new DuckDBParameter("runId", runId));
+
+    using var reader = await command.ExecuteReaderAsync();
+    var singles = new List<BacktestSingle>();
+
+    while (reader.Read()) {
+      var single = new BacktestSingle(
+        id: reader.GetString(0),
+        run_id: reader.GetString(1),
+        dataset: reader.GetString(2),
+        dataset_start: reader.GetDateTime(3),
+        dataset_end: reader.GetDateTime(4),
+        strategy_name: reader.GetString(5),
+        strategy_config: reader.GetString(6),
+        broker_config: reader.GetString(7),
+        metrics: reader.GetString(8)
+      );
+
+      singles.Add(single);
+    }
+
+    return singles;
+  }
 
   public static BacktestSingle Create(string runId, BacktestConfig config, TraderMetrics metrics) {
     var id = new Visus.Cuid.Cuid2().ToString();

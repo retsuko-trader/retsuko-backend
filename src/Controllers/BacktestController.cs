@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using Retsuko.Core;
+using Retsuko.Dtos;
 
 namespace Retsuko.Controllers;
 
@@ -47,7 +48,27 @@ public class BacktestController: Controller {
   public async Task<IActionResult> GetBulkRuns() {
     var runs = await BacktestRun.List();
 
-    return Ok(runs);
+    return Ok(runs.Select(x => new ExtBacktestRun(x)));
+  }
+
+  [HttpGet("bulk/run/{id}")]
+  public async Task<IActionResult> GetBulkRun(string id) {
+    var run = await BacktestRun.Get(id);
+    var singles = await BacktestSingle.List(id);
+
+    ExtBacktestRun? extRun = run.HasValue ? new ExtBacktestRun(run.Value) : null;
+
+    return Ok(new {
+      run = extRun,
+      singles = singles.Select(x => new ExtBacktestSingle(x)),
+    });
+  }
+
+  [HttpGet("bulk/run/{id}/{singleID}/trades")]
+  public async Task<IActionResult> GetSingleTrades(string id, string singleId) {
+    var trades = await BacktestTrade.List(singleId);
+
+    return Ok(trades);
   }
 
   [HttpPost("bulk/run")]

@@ -1,3 +1,5 @@
+using DuckDB.NET.Data;
+
 namespace Retsuko.Core;
 
 public record struct BacktestTrade(
@@ -11,6 +13,32 @@ public record struct BacktestTrade(
   double profit
 ) {
   public static string TableName => "backtest_trade";
+
+  public static async Task<IEnumerable<BacktestTrade>> List(string singleId) {
+    using var command = Database.Backtest.CreateCommand();
+    command.CommandText = $"SELECT * FROM {TableName} WHERE single_id = $singleId";
+    command.Parameters.Add(new DuckDBParameter("singleId", singleId));
+
+    using var reader = await command.ExecuteReaderAsync();
+    var trades = new List<BacktestTrade>();
+
+    while (reader.Read()) {
+      var trade = new BacktestTrade(
+        single_id: reader.GetString(0),
+        ts: reader.GetDateTime(1),
+        signal: reader.GetString(2),
+        confidence: reader.GetDouble(3),
+        asset: reader.GetDouble(4),
+        currency: reader.GetDouble(5),
+        price: reader.GetDouble(6),
+        profit: reader.GetDouble(7)
+      );
+
+      trades.Add(trade);
+    }
+
+    return trades;
+  }
 
   public static BacktestTrade Create(string singleId, Trade trade) {
     return new BacktestTrade(

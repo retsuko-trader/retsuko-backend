@@ -40,6 +40,28 @@ public record struct BacktestRun(
     return runs;
   }
 
+  public static async Task<BacktestRun?> Get(string id) {
+    using var command = Database.Backtest.CreateCommand();
+    command.CommandText = $"SELECT * FROM {TableName} WHERE id = $id";
+    command.Parameters.Add(new DuckDBParameter("id", id));
+
+    using var reader = await command.ExecuteReaderAsync();
+    if (!reader.Read()) {
+      return null;
+    }
+
+    return new BacktestRun(
+      id: reader.GetString(0),
+      name: reader.GetString(1),
+      description: reader.GetString(2),
+      created_at: reader.GetDateTime(3),
+      ended_at: reader.IsDBNull(4) ? null : reader.GetDateTime(4),
+      datasets: reader.GetString(5),
+      strategies: reader.GetString(6),
+      broker_config: reader.GetString(7)
+    );
+  }
+
   public static BacktestRun Create(BulkBacktestConfig config) {
     var runId = new Visus.Cuid.Cuid2().ToString();
     var run = new BacktestRun(
