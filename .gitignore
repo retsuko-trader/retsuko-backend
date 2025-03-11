@@ -44,3 +44,5 @@ msbuild.err
 msbuild.wrn
 
 /db
+.env
+/Properties/launchSettings.json

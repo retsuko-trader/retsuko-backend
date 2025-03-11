@@ -1,0 +1,10 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:6.2-alpine
+    container_name: redis-retsuko
+    ports:
+      - 6380:6379
+    restart: always
+    command: redis-server --requirepass "${REDIS_PASSWORD}"
