@@ -15,6 +15,31 @@ public record struct BacktestRun(
 ) {
   public static string TableName => "backtest_run";
 
+  public static async Task<IReadOnlyList<BacktestRun>> List() {
+    using var command = Database.Backtest.CreateCommand();
+    command.CommandText = $"SELECT * FROM {TableName}";
+
+    using var reader = await command.ExecuteReaderAsync();
+    var runs = new List<BacktestRun>();
+
+    while (reader.Read()) {
+      var run = new BacktestRun(
+        id: reader.GetString(0),
+        name: reader.GetString(1),
+        description: reader.GetString(2),
+        created_at: reader.GetDateTime(3),
+        ended_at: reader.IsDBNull(4) ? null : reader.GetDateTime(4),
+        datasets: reader.GetString(5),
+        strategies: reader.GetString(6),
+        broker_config: reader.GetString(7)
+      );
+
+      runs.Add(run);
+    }
+
+    return runs;
+  }
+
   public static BacktestRun Create(BulkBacktestConfig config) {
     var runId = new Visus.Cuid.Cuid2().ToString();
     var run = new BacktestRun(
