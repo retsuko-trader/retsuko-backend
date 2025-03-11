@@ -16,7 +16,7 @@ public record struct BacktestTrade(
 
   public static async Task<IEnumerable<BacktestTrade>> List(string singleId) {
     using var command = Database.Backtest.CreateCommand();
-    command.CommandText = $"SELECT * FROM {TableName} WHERE single_id = $singleId";
+    command.CommandText = $"SELECT * FROM {TableName} WHERE single_id = $singleId ORDER BY ts ASC";
     command.Parameters.Add(new DuckDBParameter("singleId", singleId));
 
     using var reader = await command.ExecuteReaderAsync();

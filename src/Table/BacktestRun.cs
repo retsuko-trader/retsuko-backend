@@ -17,7 +17,7 @@ public record struct BacktestRun(
 
   public static async Task<IReadOnlyList<BacktestRun>> List() {
     using var command = Database.Backtest.CreateCommand();
-    command.CommandText = $"SELECT * FROM {TableName}";
+    command.CommandText = $"SELECT * FROM {TableName} ORDER BY created_at DESC";
 
     using var reader = await command.ExecuteReaderAsync();
     var runs = new List<BacktestRun>();
