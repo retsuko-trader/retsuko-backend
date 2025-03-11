@@ -51,7 +51,7 @@ public static partial class Migrations {
     command.CommandText = @"CREATE TABLE IF NOT EXISTS backtest_trade (
         single_id VARCHAR,
         ts TIMESTAMP NOT NULL,
-        ""action"" TEXT NOT NULL,
+        signal TEXT NOT NULL,
         confidence DOUBLE NOT NULL,
         asset DOUBLE NOT NULL,
         currency DOUBLE NOT NULL,
@@ -87,7 +87,7 @@ public static partial class Migrations {
       id VARCHAR PRIMARY KEY,
       trader_id VARCHAR NOT NULL,
       ts TIMESTAMP NOT NULL,
-      ""action"" TEXT NOT NULL,
+      signal TEXT NOT NULL,
       confidence DOUBLE NOT NULL,
       asset DOUBLE NOT NULL,
       currency DOUBLE NOT NULL,

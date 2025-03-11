@@ -3,6 +3,7 @@ using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using Retsuko.Migrations;
 
 const string SERVICE_NAME = "retsuko-backend";
 
@@ -47,4 +48,8 @@ var app = builder.Build();
 MyLogger.Logger = app.Logger;
 
 app.MapControllerRoute("default", "{controller=Home}/{action=Index}/{id?}");
+
+await Migrations.CreateBacktest();
+await Migrations.CreatePaperTrader();
+
 app.Run();

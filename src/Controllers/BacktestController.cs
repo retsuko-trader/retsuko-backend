@@ -42,4 +42,13 @@ public class BacktestController: Controller {
 
     return Ok(report);
   }
+
+  [HttpPost("bulk/run")]
+  public async Task<IActionResult> RunBulk([FromBody]BulkBacktestConfig config) {
+    var bulk = new BulkBacktester(config);
+
+    bulk.Run();
+
+    return Ok(bulk.BacktestRun);
+  }
 }

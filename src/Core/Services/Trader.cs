@@ -22,8 +22,10 @@ public abstract class Trader {
     this.strategy = strategy;
     this.broker = broker;
 
-    trades = new List<Trade>();
-    metrics = TraderMetrics.Empty;
+    trades = [];
+    metrics = TraderMetrics.Empty with {
+      startBalance = broker.InitialBalance
+    };
   }
 
   public virtual async Task Init() {
@@ -105,5 +107,7 @@ public abstract class Trader {
     var helper = new MetricsHelper(startBalance, ref portfolio, ref metrics, firstCandle.Value, lastCandle.Value);
     metrics.cagr = helper.cagr();
     metrics.avgTrades = helper.avgTrades();
+
+    metrics.endBalance = portfolio.totalBalance;
   }
 }

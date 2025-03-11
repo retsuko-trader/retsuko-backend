@@ -13,14 +13,8 @@ public class Backtester: Trader {
   }
 
   public TraderReport GetReport() {
-    var profit = lastCandle.HasValue
-      ? broker.GetPortfolio().currency + broker.GetPortfolio().asset * lastCandle.Value.close
-      : broker.GetPortfolio().currency;
     return new TraderReport(
       config,
-      broker.InitialBalance,
-      profit,
-      metrics.totalProfit,
       trades.ToArray(),
       metrics
     );
