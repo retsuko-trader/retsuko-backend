@@ -102,26 +102,9 @@ public static class Downloader {
       return;
     }
 
-    var api = Broker.API.ExchangeData;
-    var candles = await api.GetKlinesAsync(symbolName, interval, start, null, 1000);
-
-    if (!candles.Data.Any()) {
-      return;
-    }
-
-    Insert(Market.futures, symbolId, interval, candles.Data);
-
-    var end = candles.Data.Last().OpenTime;
-
-    while (candles.Data.Count() >= 1000) {
-      candles = await api.GetKlinesAsync(symbolName, interval, end, null, 1000);
-
-      if (!candles.Data.Any()) {
-        break;
-      }
-
-      end = candles.Data.Last().OpenTime;
-      Insert(Market.futures, symbolId, interval, candles.Data.Skip(1));
+    var chunks = Broker.GetKlineChunksAsync(symbolName, interval, start);
+    await foreach (var chunk in chunks) {
+      Insert(Market.futures, symbolId, interval, chunk);
     }
 
     var dataset = await Dataset.GetFrom(db, interval);
