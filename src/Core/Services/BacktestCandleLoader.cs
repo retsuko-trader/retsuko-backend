@@ -13,6 +13,11 @@ public class BacktestCandleLoader: ICandleLoader, IDisposable {
     this.config = config;
   }
 
+  public async Task<IEnumerable<Candle>> Preload() {
+    await ValueTask.CompletedTask;
+    return [];
+  }
+
   public async Task<bool> Init() {
     var symbol = await Symbol.Get(config.symbolId);
     if (symbol == null) {

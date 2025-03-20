@@ -30,6 +30,9 @@ public abstract class Trader {
 
   public virtual async Task Init() {
     await loader.Init();
+
+    var candles = await loader.Preload();
+    await strategy.Preload(candles);
   }
 
   public async Task Tick() {
