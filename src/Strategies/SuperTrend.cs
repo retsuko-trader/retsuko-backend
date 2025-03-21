@@ -1,4 +1,3 @@
-using System.Dynamic;
 using System.Text.Json;
 using Retsuko.Core;
 using Retsuko.Core.Indicators;
@@ -137,8 +136,20 @@ public class SuperTrendStrategy: Strategy<SuperTrendStrategyConfig>, IStrategyCr
     return true;
   }
 
+  record SerializedState(
+    SuperTrendStrategyConfig Config,
+    State trend,
+    State lastTrend,
+    double lastClose,
+    int age,
+    double confidence,
+    double prevBuyConfidence,
+    string stopLoss,
+    string atr
+  );
+
   public override string Serialize() {
-    return JsonSerializer.Serialize(new {
+    return JsonSerializer.Serialize(new SerializedState(
       Config,
       trend,
       lastTrend,
@@ -146,12 +157,13 @@ public class SuperTrendStrategy: Strategy<SuperTrendStrategyConfig>, IStrategyCr
       age,
       confidence,
       prevBuyConfidence,
-      stopLoss = stopLoss.Serialize()
-    });
+      stopLoss.Serialize(),
+      atr.Serialize()
+    ));
   }
 
   public override void Deserialize(string data) {
-    dynamic? parsed = JsonSerializer.Deserialize<ExpandoObject>(data);
+    var parsed = JsonSerializer.Deserialize<SerializedState>(data);
     if (parsed == null) {
       return;
     }
@@ -164,5 +176,6 @@ public class SuperTrendStrategy: Strategy<SuperTrendStrategyConfig>, IStrategyCr
     confidence = parsed.confidence;
     prevBuyConfidence = parsed.prevBuyConfidence;
     stopLoss.Deserialize(parsed.stopLoss);
+    atr.Deserialize(parsed.atr);
   }
 }

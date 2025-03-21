@@ -1,4 +1,3 @@
-using System.Dynamic;
 using System.Text.Json;
 using Retsuko.Core;
 using Retsuko.Core.Indicators;
@@ -125,17 +124,24 @@ public class TurtleStrategy: Strategy<TurtleStrategyConfig>, IStrategyCreate<Tur
     return (high, low);
   }
 
+  record SerializedState(
+    TurtleStrategyConfig Config,
+    Candle[] candles,
+    int age,
+    int candlesLength
+  );
+
   public override string Serialize() {
-    return JsonSerializer.Serialize(new {
+    return JsonSerializer.Serialize(new SerializedState(
       Config,
       candles,
       age,
       candlesLength
-    });
+    ));
   }
 
   public override void Deserialize(string data) {
-    dynamic? parsed = JsonSerializer.Deserialize<ExpandoObject>(data);
+    var parsed = JsonSerializer.Deserialize<SerializedState>(data);
     if (parsed == null) {
       return;
     }

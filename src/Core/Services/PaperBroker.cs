@@ -1,4 +1,3 @@
-using System.Dynamic;
 using System.Text.Json;
 
 namespace Retsuko.Core;
@@ -23,6 +22,8 @@ public class PaperBroker: IBroker, ISerializable {
   }
 
   public async Task<Trade?> HandleAdvice(Candle candle, Signal signal) {
+    await ValueTask.CompletedTask;
+
     var kind = signal.kind;
     var confidence = signal.confidence;
 
@@ -207,16 +208,22 @@ public class PaperBroker: IBroker, ISerializable {
     return portfolio;
   }
 
+  record SerializedState(
+    PaperBrokerConfig config,
+    Portfolio portfolio,
+    Position? position
+  );
+
   public string Serialize() {
-    return JsonSerializer.Serialize(new {
+    return JsonSerializer.Serialize(new SerializedState(
       config,
       portfolio,
       position
-    });
+    ));
   }
 
   public void Deserialize(string data) {
-    dynamic? obj = JsonSerializer.Deserialize<ExpandoObject>(data);
+    var obj = JsonSerializer.Deserialize<SerializedState>(data);
     if (obj == null) {
       return;
     }

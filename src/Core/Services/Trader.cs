@@ -30,14 +30,16 @@ public abstract class Trader {
     await strategy.Preload(candles);
   }
 
-  public async Task Tick(Candle candle) {
+  public async virtual Task<Trade?> Tick(Candle candle) {
     if (!firstCandle.HasValue) {
       firstCandle = candle;
     }
 
+    Trade? trade = null;
+
     var signal = await strategy.Update(candle);
     if (signal != null) {
-      var trade = await broker.HandleAdvice(candle, signal);
+      trade = await broker.HandleAdvice(candle, signal);
       if (trade.HasValue) {
         if (trades.Count > 0) {
           var lastTrade = trades[^1];
@@ -59,9 +61,10 @@ public abstract class Trader {
     }
 
     lastCandle = candle;
+    return trade;
   }
 
-  protected void ProcessMetrics(Candle candle, Trade? trade) {
+  protected virtual void ProcessMetrics(Candle candle, Trade? trade) {
     if (!firstCandle.HasValue || !lastCandle.HasValue) {
       return;
     }

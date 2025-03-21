@@ -1,4 +1,3 @@
-using System.Dynamic;
 using System.Text.Json;
 using Retsuko.Core;
 
@@ -97,17 +96,24 @@ public class SuperTrendTurtleStrategy: Strategy<SuperTrendTurtleStrategyConfig>,
     return null;
   }
 
+  record SerializedState(
+    string superTrend,
+    string turtle,
+    Signal? superTrendSignal,
+    Signal? turtleSignal
+  );
+
   public override string Serialize() {
-    return JsonSerializer.Serialize(new {
-      superTrend = superTrend.Serialize(),
-      turtle = turtle.Serialize(),
+    return JsonSerializer.Serialize(new SerializedState(
+      superTrend: superTrend.Serialize(),
+      turtle: turtle.Serialize(),
       superTrendSignal,
-      turtleSignal,
-    });
+      turtleSignal
+    ));
   }
 
   public override void Deserialize(string data) {
-    dynamic? parsed = JsonSerializer.Deserialize<ExpandoObject>(data);
+    var parsed = JsonSerializer.Deserialize<SerializedState>(data);
     if (parsed == null) {
       return;
     }

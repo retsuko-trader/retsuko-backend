@@ -45,6 +45,7 @@ public class BacktestCandleLoader: ICandleLoader, IDisposable {
   }
 
   public async Task<Candle> LoadOne() {
+    await ValueTask.CompletedTask;
     return Candle.From(config.market, config.symbolId, config.interval, reader);
   }
 

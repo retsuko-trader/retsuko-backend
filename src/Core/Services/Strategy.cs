@@ -21,6 +21,8 @@ public abstract class Strategy<TConfig>: IStrategy, ISerializable where TConfig:
         indicator.Update(candle);
       }
     }
+
+    await ValueTask.CompletedTask;
   }
 
   public virtual async Task<Signal?> Update(Candle candle) {
@@ -28,6 +30,7 @@ public abstract class Strategy<TConfig>: IStrategy, ISerializable where TConfig:
       indicator.Update(candle);
     }
 
+    await ValueTask.CompletedTask;
     return null;
   }
 

@@ -1,4 +1,3 @@
-using System.Dynamic;
 using System.Text.Json;
 
 namespace Retsuko.Core;
@@ -37,17 +36,24 @@ public class TrailingStopLoss: ISerializable {
     return stopLoss > price;
   }
 
+  record SerializedState(
+    double percentage,
+    double prevPrice,
+    double stopLoss,
+    bool isActive
+  );
+
   public string Serialize() {
-    return JsonSerializer.Serialize(new {
+    return JsonSerializer.Serialize(new SerializedState(
       percentage,
       prevPrice,
       stopLoss,
       isActive
-    });
+    ));
   }
 
   public void Deserialize(string data) {
-    dynamic? parsed = JsonSerializer.Deserialize<ExpandoObject>(data);
+    var parsed = JsonSerializer.Deserialize<SerializedState>(data);
     if (parsed == null) {
       return;
     }

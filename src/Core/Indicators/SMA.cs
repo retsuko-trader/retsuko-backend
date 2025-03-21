@@ -1,4 +1,3 @@
-using System.Dynamic;
 using System.Text.Json;
 
 namespace Retsuko.Core.Indicators;
@@ -35,19 +34,28 @@ public partial class Indicators {
       age += 1;
     }
 
+    record SerializedState(
+      bool Ready,
+      double Value,
+      int period,
+      int age,
+      double sum,
+      double[] closes
+    );
+
     public string Serialize() {
-      return JsonSerializer.Serialize(new {
+      return JsonSerializer.Serialize(new SerializedState(
         Ready,
         Value,
         period,
         age,
         sum,
-        closes,
-      });
+        closes
+      ));
     }
 
     public void Deserialize(string data) {
-      dynamic? parsed = JsonSerializer.Deserialize<ExpandoObject>(data);
+      var parsed = JsonSerializer.Deserialize<SerializedState>(data);
       if (parsed == null) {
         return;
       }
