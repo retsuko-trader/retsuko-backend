@@ -11,6 +11,12 @@ public class CandleController : Controller {
     return Ok(result);
   }
 
+  [HttpGet("symbol")]
+  public async Task<IActionResult> GetSymbols() {
+    var result = await Symbol.List();
+    return Ok(result);
+  }
+
   [HttpGet("market")]
   public async Task<IActionResult> GetMarkets() {
     var info = await Broker.API.ExchangeData.GetExchangeInfoAsync();

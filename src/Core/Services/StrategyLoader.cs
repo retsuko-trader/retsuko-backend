@@ -8,6 +8,11 @@ public record StrategyInfo(
   Func<string, IStrategy> CreateFn
 );
 
+public record ExtStrategyInfo(
+  string Name,
+  string Config
+);
+
 public static class StrategyLoader {
   public static readonly StrategyInfo[] strategies = [
     new StrategyInfo("SuperTrend", SuperTrendStrategy.DefaultConfig, SuperTrendStrategy.Create),
@@ -15,8 +20,8 @@ public static class StrategyLoader {
     new StrategyInfo("SuperTrendTurtle", SuperTrendTurtleStrategy.DefaultConfig, SuperTrendTurtleStrategy.Create),
   ];
 
-  public static IEnumerable<string> GetStrategyNames() {
-    return strategies.Select(strategy => strategy.Name);
+  public static IEnumerable<ExtStrategyInfo> GetStrategyEntries() {
+    return strategies.Select(strategy => new ExtStrategyInfo(strategy.Name, strategy.Config));
   }
 
   public static string? GetDefaultConfig(string name) {
