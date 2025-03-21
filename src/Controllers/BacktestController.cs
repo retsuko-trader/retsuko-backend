@@ -24,15 +24,17 @@ public class BacktestController: Controller {
   [HttpPost("single/run")]
   public async Task<IActionResult> RunSingle([FromBody]SingleBacktestRunRequest req) {
     var tracer = MyTracer.Tracer;
+
+    var loader = new BacktestCandleLoader(req.config.dataset);
     var backtester = new Backtester(req.config);
 
-    using (var init = tracer.StartActiveSpan("Backtester.Init")) {
-      await backtester.Init();
+    using (var preload = tracer.StartActiveSpan("Backtester.Preload")) {
+      await backtester.Preload(loader);
     }
 
     var run = tracer.StartActiveSpan("Backtester.Run");
-    while (!backtester.IsEnded) {
-      await backtester.Tick();
+    while (await loader.Read()) {
+      await backtester.Tick(await loader.LoadOne());
     }
     run.End();
 
@@ -76,6 +78,7 @@ public class BacktestController: Controller {
     var bulk = new BulkBacktester(config);
 
     _ = Task.Run(() => bulk.Run());
+    await ValueTask.CompletedTask;
 
     return Ok(bulk.BacktestRun);
   }

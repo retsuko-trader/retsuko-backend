@@ -9,7 +9,13 @@ public record struct PapertraderDatasetConfig(
   int preloadCount
 );
 
+public record struct PapertraderCreateConfig(
+  string name,
+  string description
+);
+
 public record struct PapertraderConfig(
+  PapertraderCreateConfig info,
   PapertraderDatasetConfig dataset,
   StrategyConfig strategy,
   PaperBrokerConfig broker

@@ -41,12 +41,13 @@ public class BulkBacktester {
 
       using var runSpan = tracer.StartActiveSpan("BulkBacktester.Single.Run");
 
+      var loader = new BacktestCandleLoader(config.dataset);
       var backtester = new Backtester(config);
 
-      await backtester.Init();
+      await backtester.Preload(loader);
 
-      while (!backtester.IsEnded) {
-        await backtester.Tick();
+      while (await loader.Read()) {
+        await backtester.Tick(await loader.LoadOne());
       }
 
       runSpan.End();

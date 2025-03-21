@@ -59,15 +59,18 @@ public static class Debugger {
   }
 
   public static async Task DebugBacktester() {
-    var trader = new Backtester(new BacktestConfig(
+    var config = new BacktestConfig(
       new DatasetConfig(Market.futures, 0, Binance.Net.Enums.KlineInterval.EightHour, DateTime.Parse("2021-01-01"), DateTime.Parse("2021-01-31")),
       new StrategyConfig("Turtle", StrategyLoader.GetDefaultConfig("Turtle")!),
       new PaperBrokerConfig(1000, 0.001, false, true)
-    ));
+    );
 
-    await trader.Init();
-    while (!trader.IsEnded) {
-      await trader.Tick();
+    var loader = new BacktestCandleLoader(config.dataset);
+    var trader = new Backtester(config);
+
+    await trader.Preload(loader);
+    while (await loader.Read()) {
+      await trader.Tick(await loader.LoadOne());
       Console.ReadLine();
     }
   }

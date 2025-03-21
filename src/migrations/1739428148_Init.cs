@@ -80,6 +80,7 @@ public static partial class Migrations {
       strategy_config TEXT NOT NULL,
       strategy_state TEXT NOT NULL,
       broker_state TEXT NOT NULL,
+      metrics TEXT NOT NULL,
     )";
     await command.ExecuteNonQueryAsync();
 

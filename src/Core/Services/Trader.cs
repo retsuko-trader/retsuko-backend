@@ -1,11 +1,8 @@
 namespace Retsuko.Core;
 
 public abstract class Trader {
-  public ICandleLoader loader { get; protected set; }
   public IStrategy strategy { get; protected set; }
   public IBroker broker { get; protected set; }
-
-  public bool IsEnded { get; protected set; }
 
   protected List<Trade> trades;
   protected Candle? firstCandle = null;
@@ -14,11 +11,9 @@ public abstract class Trader {
   protected TraderMetrics metrics;
 
   public Trader(
-    ICandleLoader loader,
     IStrategy strategy,
     IBroker broker
   ) {
-    this.loader = loader;
     this.strategy = strategy;
     this.broker = broker;
 
@@ -28,20 +23,14 @@ public abstract class Trader {
     };
   }
 
-  public virtual async Task Init() {
+  public virtual async Task Preload(ICandleLoader loader) {
     await loader.Init();
 
     var candles = await loader.Preload();
     await strategy.Preload(candles);
   }
 
-  public async Task Tick() {
-    if (!await loader.Read()) {
-      IsEnded = true;
-      return;
-    }
-
-    var candle = await loader.LoadOne();
+  public async Task Tick(Candle candle) {
     if (!firstCandle.HasValue) {
       firstCandle = candle;
     }

@@ -12,7 +12,8 @@ public record struct PaperTrader(
   string strategy_name,
   string strategy_config,
   string strategy_state,
-  string broker_state
+  string broker_state,
+  string metrics
 ) {
   public static string TableName => "paper_trader";
 }
