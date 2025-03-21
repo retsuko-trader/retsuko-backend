@@ -19,9 +19,9 @@ public class PaperTrader: Trader, ISerializable<PaperTraderState> {
       id: id,
       name: config.info.name,
       description: config.info.description,
-      created_at: DateTime.Now,
-      updated_at: DateTime.Now,
-      ended_at: null,
+      createdAt: DateTime.Now,
+      updatedAt: DateTime.Now,
+      endedAt: null,
       dataset: JsonSerializer.Serialize(config.dataset),
       strategy_name: config.strategy.name,
       strategy_config: config.strategy.config,
@@ -53,7 +53,7 @@ public class PaperTrader: Trader, ISerializable<PaperTraderState> {
       entity.Insert();
     }
 
-    state.updated_at = DateTime.Now;
+    state.updatedAt = DateTime.Now;
     state.strategy_state = strategy.Serialize();
     state.broker_state = broker.Serialize();
     state.metrics = JsonSerializer.Serialize(metrics);

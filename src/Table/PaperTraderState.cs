@@ -9,9 +9,9 @@ public record struct PaperTraderState(
   string id,
   string name,
   string description,
-  DateTime created_at,
-  DateTime updated_at,
-  DateTime? ended_at,
+  DateTime createdAt,
+  DateTime updatedAt,
+  DateTime? endedAt,
   string dataset,
   string strategy_name,
   string strategy_config,
@@ -37,9 +37,9 @@ public record struct PaperTraderState(
       id: reader.GetString(0),
       name: reader.GetString(1),
       description: reader.GetString(2),
-      created_at: reader.GetDateTime(3),
-      updated_at: reader.GetDateTime(4),
-      ended_at: reader.IsDBNull(5) ? null : reader.GetDateTime(5),
+      createdAt: reader.GetDateTime(3),
+      updatedAt: reader.GetDateTime(4),
+      endedAt: reader.IsDBNull(5) ? null : reader.GetDateTime(5),
       dataset: reader.GetString(6),
       strategy_name: reader.GetString(7),
       strategy_config: reader.GetString(8),
@@ -84,9 +84,9 @@ public record struct PaperTraderState(
     row.AppendValue(id)
       .AppendValue(name)
       .AppendValue(description)
-      .AppendValue(created_at)
-      .AppendValue(updated_at)
-      .AppendValue(ended_at)
+      .AppendValue(createdAt)
+      .AppendValue(updatedAt)
+      .AppendValue(endedAt)
       .AppendValue(dataset)
       .AppendValue(strategy_name)
       .AppendValue(strategy_config)
@@ -117,8 +117,8 @@ public record struct PaperTraderState(
     command.Parameters.Add(new DuckDBParameter("id", id));
     command.Parameters.Add(new DuckDBParameter("name", name));
     command.Parameters.Add(new DuckDBParameter("description", description));
-    command.Parameters.Add(new DuckDBParameter("updated_at", updated_at));
-    command.Parameters.Add(new DuckDBParameter("ended_at", ended_at));
+    command.Parameters.Add(new DuckDBParameter("updated_at", updatedAt));
+    command.Parameters.Add(new DuckDBParameter("ended_at", endedAt));
     command.Parameters.Add(new DuckDBParameter("strategy_state", strategy_state));
     command.Parameters.Add(new DuckDBParameter("broker_state", broker_state));
     command.Parameters.Add(new DuckDBParameter("metrics", metrics));

@@ -7,8 +7,8 @@ public record struct BacktestRun(
   string id,
   string name,
   string description,
-  DateTime created_at,
-  DateTime? ended_at,
+  DateTime createdAt,
+  DateTime? endedAt,
   string datasets,
   string strategies,
   string broker_config
@@ -27,8 +27,8 @@ public record struct BacktestRun(
         id: reader.GetString(0),
         name: reader.GetString(1),
         description: reader.GetString(2),
-        created_at: reader.GetDateTime(3),
-        ended_at: reader.IsDBNull(4) ? null : reader.GetDateTime(4),
+        createdAt: reader.GetDateTime(3),
+        endedAt: reader.IsDBNull(4) ? null : reader.GetDateTime(4),
         datasets: reader.GetString(5),
         strategies: reader.GetString(6),
         broker_config: reader.GetString(7)
@@ -54,8 +54,8 @@ public record struct BacktestRun(
       id: reader.GetString(0),
       name: reader.GetString(1),
       description: reader.GetString(2),
-      created_at: reader.GetDateTime(3),
-      ended_at: reader.IsDBNull(4) ? null : reader.GetDateTime(4),
+      createdAt: reader.GetDateTime(3),
+      endedAt: reader.IsDBNull(4) ? null : reader.GetDateTime(4),
       datasets: reader.GetString(5),
       strategies: reader.GetString(6),
       broker_config: reader.GetString(7)
@@ -68,8 +68,8 @@ public record struct BacktestRun(
       id: runId,
       name: config.name,
       description: config.description,
-      created_at: DateTime.UtcNow,
-      ended_at: null,
+      createdAt: DateTime.UtcNow,
+      endedAt: null,
       datasets: JsonSerializer.Serialize(config.datasets),
       strategies: JsonSerializer.Serialize(config.strategies),
       broker_config: JsonSerializer.Serialize(config.broker)
@@ -84,8 +84,8 @@ public record struct BacktestRun(
     row.AppendValue(id)
       .AppendValue(name)
       .AppendValue(description)
-      .AppendValue(created_at)
-      .AppendValue(ended_at)
+      .AppendValue(createdAt)
+      .AppendValue(endedAt)
       .AppendValue(datasets)
       .AppendValue(strategies)
       .AppendValue(broker_config)
@@ -95,11 +95,11 @@ public record struct BacktestRun(
   }
 
   public async Task UpdateEnd() {
-    ended_at = DateTime.UtcNow;
+    endedAt = DateTime.UtcNow;
 
     using var command = Database.Backtest.CreateCommand();
     command.CommandText = $"UPDATE {TableName} SET ended_at = $ended_at WHERE id = $id";
-    command.Parameters.Add(new DuckDBParameter("ended_at", ended_at));
+    command.Parameters.Add(new DuckDBParameter("ended_at", endedAt));
     command.Parameters.Add(new DuckDBParameter("id", id));
 
     await command.ExecuteNonQueryAsync();

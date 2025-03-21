@@ -6,9 +6,9 @@ public record struct ExtPaperTraderState {
   public string id { get; init; }
   public string name { get; init; }
   public string description { get; init; }
-  public DateTime created_at { get; init; }
-  public DateTime updated_at { get; init; }
-  public DateTime? ended_at { get; init; }
+  public DateTime createdAt { get; init; }
+  public DateTime updatedAt { get; init; }
+  public DateTime? endedAt { get; init; }
   public PapertraderConfig config { get; init; }
   public TraderMetrics metrics { get; init; }
 
@@ -16,9 +16,9 @@ public record struct ExtPaperTraderState {
     id = state.id;
     name = state.name;
     description = state.description;
-    created_at = state.created_at;
-    updated_at = state.updated_at;
-    ended_at = state.ended_at;
+    createdAt = state.createdAt;
+    updatedAt = state.updatedAt;
+    endedAt = state.endedAt;
     config = state.Config;
     metrics = state.Metrics;
   }
