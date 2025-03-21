@@ -13,6 +13,22 @@ public class PaperTraderController : Controller {
     return Ok(result.Select(x => new ExtPaperTraderState(x)));
   }
 
+  [HttpGet("{id}")]
+  public async Task<IActionResult> Get(string id) {
+    var state = await PaperTraderState.Get(id);
+    if (state == null) {
+      return NotFound();
+    }
+
+    return Ok(new ExtPaperTraderState(state.Value));
+  }
+
+  [HttpGet("{id}/trade")]
+  public async Task<IActionResult> GetTrades(string id) {
+    var trades = await PaperTraderTrade.List(id);
+    return Ok(trades);
+  }
+
   public record CreatePaperTraderRequest(
     [Required] PapertraderConfig config
   );

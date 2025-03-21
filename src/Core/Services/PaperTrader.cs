@@ -41,7 +41,7 @@ public class PaperTrader: Trader, ISerializable<PaperTraderState> {
 
       var entity = new PaperTraderTrade(
         id: id,
-        trader_id: Id,
+        traderId: Id,
         ts: DateTime.Now,
         signal: trade.Value.signal,
         confidence: trade.Value.confidence,
