@@ -74,4 +74,44 @@ public static class Debugger {
       Console.ReadLine();
     }
   }
+
+  public static async Task ValidatePaperTrader() {
+    var config = new BacktestConfig(
+      new DatasetConfig(Market.futures, 0, Binance.Net.Enums.KlineInterval.EightHour, DateTime.Parse("2019-01-01"), DateTime.Parse("2026-01-31")),
+      new StrategyConfig("SuperTrendTurtle", StrategyLoader.GetDefaultConfig("SuperTrendTurtle")!),
+      new PaperBrokerConfig(1000, 0.001, false, true)
+    );
+
+    var paperTraderConfig = new PapertraderConfig(
+      new("", ""),
+      new(),
+      config.strategy,
+      config.broker
+    );
+
+    var loader = new BacktestCandleLoader(config.dataset);
+    await loader.Init();
+
+    var paperTrader = PaperTrader.Create(paperTraderConfig);
+    var backtester = new Backtester(config);
+
+    var state = paperTrader.Serialize();
+
+    while (await loader.Read()) {
+      var candle = await loader.LoadOne();
+
+      paperTrader.Deserialize(state);
+      var backtestTrade = await backtester.Tick(candle);
+      var paperTraderTrade = await paperTrader.Tick(candle);
+      state = paperTrader.Serialize();
+
+      var backtestPortfolio = backtester.broker.GetPortfolio();
+      var paperTraderPortfolio = paperTrader.broker.GetPortfolio();
+
+      if (backtestPortfolio.totalBalance != paperTraderPortfolio.totalBalance) {
+        Console.WriteLine($"Balance mismatch: {backtestPortfolio.totalBalance} {paperTraderPortfolio.totalBalance}");
+        Console.ReadLine();
+      }
+    }
+  }
 }

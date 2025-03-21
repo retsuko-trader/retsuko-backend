@@ -26,8 +26,23 @@ public class PaperTrader: Trader, ISerializable<PaperTraderState> {
       strategy_state: strategy.Serialize(),
       broker_config: JsonSerializer.Serialize(config.broker),
       broker_state: broker.Serialize(),
-      metrics: metrics.ToString()
+      metrics: JsonSerializer.Serialize(metrics)
     );
+  }
+
+  public override async Task<Trade?> Tick(Candle candle) {
+    var result = await base.Tick(candle);
+
+    state.updated_at = DateTime.Now;
+    state.strategy_state = strategy.Serialize();
+    state.broker_state = broker.Serialize();
+    return result;
+  }
+
+  protected override void ProcessMetrics(Candle candle, Trade? trade) {
+    base.ProcessMetrics(candle, trade);
+
+    state.metrics = JsonSerializer.Serialize(metrics);
   }
 
   public static PaperTrader Create(PapertraderConfig config) {

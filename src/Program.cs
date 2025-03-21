@@ -1,9 +1,7 @@
-using System.Text.Json.Serialization;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
-using Retsuko.Migrations;
 
 const string SERVICE_NAME = "retsuko-backend";
 
