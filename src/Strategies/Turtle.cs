@@ -128,7 +128,8 @@ public class TurtleStrategy: Strategy<TurtleStrategyConfig>, IStrategyCreate<Tur
     TurtleStrategyConfig Config,
     Candle[] candles,
     int age,
-    int candlesLength
+    int candlesLength,
+    string sma
   );
 
   public override string Serialize() {
@@ -136,7 +137,8 @@ public class TurtleStrategy: Strategy<TurtleStrategyConfig>, IStrategyCreate<Tur
       Config,
       candles,
       age,
-      candlesLength
+      candlesLength,
+      sma: sma.Serialize()
     ));
   }
 
@@ -150,5 +152,6 @@ public class TurtleStrategy: Strategy<TurtleStrategyConfig>, IStrategyCreate<Tur
     candles = parsed.candles;
     age = parsed.age;
     candlesLength = parsed.candlesLength;
+    sma.Deserialize(parsed.sma);
   }
 }
