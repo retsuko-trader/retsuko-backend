@@ -81,6 +81,7 @@ public static partial class Migrations {
       broker_config TEXT NOT NULL,
       broker_state TEXT NOT NULL,
       metrics TEXT NOT NULL,
+      states TEXT NOT NULL,
     )";
     await command.ExecuteNonQueryAsync();
 

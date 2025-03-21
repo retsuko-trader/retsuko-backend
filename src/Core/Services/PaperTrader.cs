@@ -3,6 +3,8 @@ using System.Text.Json;
 namespace Retsuko.Core;
 
 public class PaperTrader: Trader, ISerializable<PaperTraderState> {
+  public string Id => state.id;
+
   private readonly PapertraderConfig config;
 
   private PaperTraderState state;
@@ -26,23 +28,37 @@ public class PaperTrader: Trader, ISerializable<PaperTraderState> {
       strategy_state: strategy.Serialize(),
       broker_config: JsonSerializer.Serialize(config.broker),
       broker_state: broker.Serialize(),
-      metrics: JsonSerializer.Serialize(metrics)
+      metrics: JsonSerializer.Serialize(metrics),
+      states: JsonSerializer.Serialize(new InnerState(firstCandle, lastCandle))
     );
   }
 
   public override async Task<Trade?> Tick(Candle candle) {
-    var result = await base.Tick(candle);
+    var trade = await base.Tick(candle);
+
+    if (trade.HasValue) {
+      var id = new Visus.Cuid.Cuid2().ToString();
+
+      var entity = new PaperTraderTrade(
+        id: id,
+        trader_id: Id,
+        ts: DateTime.Now,
+        signal: trade.Value.signal,
+        confidence: trade.Value.confidence,
+        asset: trade.Value.asset,
+        currency: trade.Value.currency,
+        price: trade.Value.price,
+        profit: trade.Value.profit
+      );
+      entity.Insert();
+    }
 
     state.updated_at = DateTime.Now;
     state.strategy_state = strategy.Serialize();
     state.broker_state = broker.Serialize();
-    return result;
-  }
-
-  protected override void ProcessMetrics(Candle candle, Trade? trade) {
-    base.ProcessMetrics(candle, trade);
-
     state.metrics = JsonSerializer.Serialize(metrics);
+    state.states = JsonSerializer.Serialize(new InnerState(firstCandle, lastCandle));
+    return trade;
   }
 
   public static PaperTrader Create(PapertraderConfig config) {
@@ -73,5 +89,10 @@ public class PaperTrader: Trader, ISerializable<PaperTraderState> {
     strategy.Deserialize(state.strategy_state);
     broker.Deserialize(state.broker_state);
     metrics = JsonSerializer.Deserialize<TraderMetrics>(state.metrics);
+    var innerState = JsonSerializer.Deserialize<InnerState>(state.states)!;
+    firstCandle = innerState.firstCandle;
+    lastCandle = innerState.lastCandle;
   }
+
+  record InnerState(Candle? firstCandle, Candle? lastCandle);
 }

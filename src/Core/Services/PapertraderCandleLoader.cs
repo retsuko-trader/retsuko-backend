@@ -30,6 +30,7 @@ public class PapertraderCandleLoader: ICandleLoader {
   }
 
   public async Task<Candle> LoadOne() {
+    await ValueTask.CompletedTask;
     throw new Exception("not using");
   }
 }

@@ -1,7 +1,8 @@
+using System.Text.Json;
 using Retsuko;
 using Retsuko.Core;
 using Retsuko.Core.Indicators;
-using Retsuko.Strategies;
+using Retsuko.Dtos;
 
 public static class Debugger {
   public static void DebugATR() {
@@ -123,5 +124,37 @@ public static class Debugger {
         Console.ReadLine();
       }
     }
+  }
+
+  public static async Task ValidatePaperTraderBacktesting() {
+    var datasetConfig = new DatasetConfig(Market.futures, 0, Binance.Net.Enums.KlineInterval.EightHour, DateTime.Parse("2020-01-01T00:00:00"), DateTime.Parse("2020-02-01T00:00:00"));
+    var config = new PapertraderConfig(
+      new("", ""),
+      new(Market.futures, 0, Binance.Net.Enums.KlineInterval.EightHour, 0),
+      new StrategyConfig("SuperTrendTurtle", StrategyLoader.GetDefaultConfig("SuperTrendTurtle")!),
+      new PaperBrokerConfig(1000, 0.001, false, true)
+    );
+    var symbol = await Symbol.Get(0);
+
+    var trader = PaperTrader.Create(config);
+
+    trader.Serialize().Insert();
+
+    var loader = new BacktestCandleLoader(datasetConfig);
+    await loader.Init();
+
+    while (await loader.Read()) {
+      var candle = await loader.LoadOne();
+
+      await LiveCandleDispatcher.Dispatch(trader.Id, symbol.Value, datasetConfig.interval, candle);
+    }
+
+    var state = await PaperTraderState.Get(trader.Id);
+    if (state == null) {
+      Console.WriteLine("Failed to load state");
+      return;
+    }
+
+    Console.WriteLine(JsonSerializer.Serialize(new ExtPaperTraderState(state.Value)));
   }
 }
