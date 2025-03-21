@@ -1,15 +1,24 @@
 namespace Retsuko.Core;
 
-using System.Threading.Tasks.Dataflow;
+using Binance.Net.Enums;
 
 public static class LiveCandleDispatcher {
-  private static Dictionary<string, BufferBlock<Candle>> dispatchers = new();
+  public static async Task Dispatch(string id, Symbol symbol, KlineInterval interval, Candle candle) {
+    var kind = TraderIdHelper.Parse(id);
 
-  public static BufferBlock<Candle> Register(string id) {
-    if (dispatchers.TryGetValue(id, out var dispatcher)) {
-      return dispatcher;
+    if (kind == TraderIdHelper.IdKind.PaperTrader) {
+      await HandlePaperTrader(id, symbol, interval, candle);
+    }
+  }
+
+  private static async Task HandlePaperTrader(string id, Symbol symbol, KlineInterval interval, Candle candle) {
+    var trader = await PaperTrader.Load(id);
+    if (trader == null) {
+      MyLogger.Logger.LogError("failed to load paper trader; {id}", id);
+      return;
     }
 
-    return dispatchers[id] = new BufferBlock<Candle>();
+    await trader.Tick(candle);
+    await trader.Serialize().Update();
   }
 }

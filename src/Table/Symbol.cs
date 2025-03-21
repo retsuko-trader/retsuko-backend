@@ -35,4 +35,17 @@ public record struct Symbol(
 
     return new Symbol(id, reader.GetString(0));
   }
+
+  public static async Task<Symbol?> Get(string name) {
+    using var command = Database.Candle.CreateCommand();
+    command.CommandText = "SELECT id FROM symbol WHERE name = $name";
+    command.Parameters.Add(new DuckDBParameter("name", name));
+
+    var reader = await command.ExecuteReaderAsync();
+    if (!reader.Read()) {
+      return null;
+    }
+
+    return new Symbol(reader.GetInt32(0), name);
+  }
 }

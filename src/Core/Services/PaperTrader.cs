@@ -46,7 +46,7 @@ public class PaperTrader: Trader, ISerializable<PaperTraderState> {
   }
 
   public static PaperTrader Create(PapertraderConfig config) {
-    var id = new Visus.Cuid.Cuid2().ToString();
+    var id = TraderIdHelper.GeneratePaperTraderId();
     return new PaperTrader(config, id);
   }
 

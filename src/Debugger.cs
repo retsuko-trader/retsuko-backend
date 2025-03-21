@@ -1,6 +1,7 @@
 using Retsuko;
 using Retsuko.Core;
 using Retsuko.Core.Indicators;
+using Retsuko.Strategies;
 
 public static class Debugger {
   public static void DebugATR() {
@@ -100,10 +101,19 @@ public static class Debugger {
     while (await loader.Read()) {
       var candle = await loader.LoadOne();
 
+      paperTrader = PaperTrader.Create(paperTraderConfig);
       paperTrader.Deserialize(state);
+
       var backtestTrade = await backtester.Tick(candle);
       var paperTraderTrade = await paperTrader.Tick(candle);
       state = paperTrader.Serialize();
+
+      // if (backtestTrade.HasValue) {
+      //   Console.WriteLine($"Backtest: {backtestTrade.Value.TotalBalance}");
+      // }
+      // if (paperTraderTrade.HasValue) {
+      //   Console.WriteLine($"PaperTrader: {paperTraderTrade.Value.TotalBalance}");
+      // }
 
       var backtestPortfolio = backtester.broker.GetPortfolio();
       var paperTraderPortfolio = paperTrader.broker.GetPortfolio();

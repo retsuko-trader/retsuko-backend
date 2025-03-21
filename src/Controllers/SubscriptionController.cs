@@ -7,7 +7,7 @@ namespace Retsuko.Controllers;
 public class SubscriptionController : Controller {
   [HttpPost("callback")]
   public async Task<IActionResult> Callback() {
-    await Subscriber.SubscriptionHandler();
+    await Subscriber.HandleCallbackFromWorker();
 
     return Ok();
   }

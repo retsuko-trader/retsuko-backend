@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Threading.Tasks;
 using DuckDB.NET.Data;
 using Retsuko.Core;
 
@@ -89,11 +90,11 @@ public record struct PaperTraderState(
       .AppendValue(broker_config)
       .AppendValue(broker_state)
       .AppendValue(metrics);
-      
+
     appender.Close();
   }
 
-  public void Update() {
+  public async Task Update() {
     using var command = Database.PaperTrader.CreateCommand();
     command.CommandText = $@"
       UPDATE {TableName}
@@ -116,6 +117,6 @@ public record struct PaperTraderState(
     command.Parameters.Add(new DuckDBParameter("broker_state", broker_state));
     command.Parameters.Add(new DuckDBParameter("metrics", metrics));
 
-    command.ExecuteNonQuery();
+    await command.ExecuteNonQueryAsync();
   }
 }

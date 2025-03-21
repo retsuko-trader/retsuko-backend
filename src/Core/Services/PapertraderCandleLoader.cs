@@ -1,14 +1,10 @@
-using System.Threading.Tasks.Dataflow;
-
 namespace Retsuko.Core;
 
 public class PapertraderCandleLoader: ICandleLoader {
   private PapertraderDatasetConfig config;
-  private BufferBlock<Candle> stream;
 
-  public PapertraderCandleLoader(PapertraderDatasetConfig config, string id) {
+  public PapertraderCandleLoader(PapertraderDatasetConfig config) {
     this.config = config;
-    stream = LiveCandleDispatcher.Register(id);
   }
 
   public async Task<bool> Init() {
@@ -30,10 +26,10 @@ public class PapertraderCandleLoader: ICandleLoader {
 
   public async Task<bool> Read() {
     await ValueTask.CompletedTask;
-    return true;
+    return false;
   }
 
   public async Task<Candle> LoadOne() {
-    return await stream.ReceiveAsync();
+    throw new Exception("not using");
   }
 }
