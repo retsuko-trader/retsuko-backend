@@ -24,7 +24,7 @@ public record struct BacktestSingle(
     using var reader = await command.ExecuteReaderAsync();
     var singles = new List<BacktestSingle>();
 
-    while (reader.Read()) {
+    while (await reader.ReadAsync()) {
       var single = new BacktestSingle(
         id: reader.GetString(0),
         run_id: reader.GetString(1),

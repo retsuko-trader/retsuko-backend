@@ -22,7 +22,7 @@ public record struct BacktestRun(
     using var reader = await command.ExecuteReaderAsync();
     var runs = new List<BacktestRun>();
 
-    while (reader.Read()) {
+    while (await reader.ReadAsync()) {
       var run = new BacktestRun(
         id: reader.GetString(0),
         name: reader.GetString(1),
@@ -46,7 +46,7 @@ public record struct BacktestRun(
     command.Parameters.Add(new DuckDBParameter("id", id));
 
     using var reader = await command.ExecuteReaderAsync();
-    if (!reader.Read()) {
+    if (!await reader.ReadAsync()) {
       return null;
     }
 

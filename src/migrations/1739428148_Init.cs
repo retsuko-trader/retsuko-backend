@@ -74,11 +74,11 @@ public static partial class Migrations {
       created_at TIMESTAMP NOT NULL,
       updated_at TIMESTAMP NOT NULL,
       ended_at TIMESTAMP,
-      symbolId INT,
-      ""interval"" INT,
+      dataset TEXT NOT NULL,
       strategy_name TEXT NOT NULL,
       strategy_config TEXT NOT NULL,
       strategy_state TEXT NOT NULL,
+      broker_config TEXT NOT NULL,
       broker_state TEXT NOT NULL,
       metrics TEXT NOT NULL,
     )";
