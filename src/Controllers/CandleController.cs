@@ -19,7 +19,7 @@ public class CandleController : Controller {
 
   [HttpGet("market")]
   public async Task<IActionResult> GetMarkets() {
-    var info = await Broker.API.ExchangeData.GetExchangeInfoAsync();
+    var info = await Exchanger.API.ExchangeData.GetExchangeInfoAsync();
 
     return Ok(info.Data.Symbols);
   }

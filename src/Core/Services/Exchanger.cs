@@ -4,7 +4,7 @@ using Binance.Net.Interfaces.Clients.UsdFuturesApi;
 
 namespace Retsuko.Core;
 
-public class Broker {
+public class Exchanger {
   public static BinanceRestClient Client { get; } = new BinanceRestClient();
 
   public static IBinanceRestClientUsdFuturesApi API => Client.UsdFuturesApi;

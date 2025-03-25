@@ -19,7 +19,7 @@ public class PapertraderCandleLoader: ICandleLoader {
       return [];
     }
 
-    var preloadCandles = Broker.GetRecentKlinesAsync(symbol.Value.name, config.interval, config.preloadCount);
+    var preloadCandles = Exchanger.GetRecentKlinesAsync(symbol.Value.name, config.interval, config.preloadCount);
     var candles = await preloadCandles.ToListAsync();
     return candles.Select(x => Candle.From(config.market, symbol.Value.id, config.interval, x));
   }

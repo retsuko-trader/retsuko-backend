@@ -86,7 +86,7 @@ public static class Downloader {
 
     async Task<DateTime?> GetStart() {
       if (start.HasValue) {
-        var candles = await Broker.API.ExchangeData.GetKlinesAsync(symbolName, interval, start, null, 2);
+        var candles = await Exchanger.API.ExchangeData.GetKlinesAsync(symbolName, interval, start, null, 2);
         if (candles.Data == null || candles.Data.Count() <= 1) {
           return null;
         }
@@ -102,7 +102,7 @@ public static class Downloader {
       return;
     }
 
-    var chunks = Broker.GetKlineChunksAsync(symbolName, interval, start);
+    var chunks = Exchanger.GetKlineChunksAsync(symbolName, interval, start);
     await foreach (var chunk in chunks) {
       Insert(Market.futures, symbolId, interval, chunk);
     }
