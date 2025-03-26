@@ -1,6 +1,8 @@
 # retsuko-backend
 
-## 용어
+WIP
+
+## terminologies
 
 - Market: "futures" | "spot"
 - Symbol: symbol of coin
