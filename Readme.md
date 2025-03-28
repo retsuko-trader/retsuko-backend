@@ -25,3 +25,7 @@ Retsuko, Cryptocurrency algorithmic/systematic/programmatic trading framework
 
 ### backtesting bulk symbols, intervals, strategies
 ![backtest_bulk](imgs/backtest_bulk.png)
+
+## how to run
+
+It's not prepared yet. I'll make the documentation after validation.
