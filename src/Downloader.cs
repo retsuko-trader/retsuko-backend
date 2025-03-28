@@ -47,7 +47,7 @@ public static class Downloader {
     datasetSpan.End();
 
     using var span = tracer.StartActiveSpan("Downloader.DownloadCandles");
-    await Parallel.ForEachAsync(datasets, new ParallelOptions { MaxDegreeOfParallelism = 4 }, async (dataset, t) => {
+    await Parallel.ForEachAsync(datasets, new ParallelOptions { MaxDegreeOfParallelism = 1 }, async (dataset, t) => {
       var attributes = new OpenTelemetry.Trace.SpanAttributes(new Dictionary<string, object?> {
         { "symbolId", dataset.symbolId },
         { "interval", dataset.interval },
