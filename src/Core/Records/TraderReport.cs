@@ -10,6 +10,9 @@ public record struct TraderReport(
 public record struct TraderMetrics(
   double startBalance,
   double endBalance,
+  double asset,
+  double currency,
+  double totalBalance,
   int totalTrades,
   double avgTrades,
   double totalProfit,
@@ -29,6 +32,6 @@ public record struct TraderMetrics(
   double marketChange
 ) {
   public static TraderMetrics Empty => new(
-    0, 0, 0, 0, 0, 0, 0, 0, 0, double.MaxValue, DateTime.MinValue, 0, DateTime.MinValue, 0, 0, 0, DateTime.MinValue, DateTime.MinValue, 0
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, double.MaxValue, DateTime.MinValue, 0, DateTime.MinValue, 0, 0, 0, DateTime.MinValue, DateTime.MinValue, 0
   );
 }

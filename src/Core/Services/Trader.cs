@@ -19,7 +19,12 @@ public abstract class Trader {
 
     trades = [];
     metrics = TraderMetrics.Empty with {
-      startBalance = broker.InitialBalance
+      startBalance = broker.InitialBalance,
+      endBalance = broker.InitialBalance,
+      asset = broker.GetPortfolio().asset,
+      currency = broker.GetPortfolio().currency,
+      totalBalance = broker.InitialBalance,
+      totalProfit = 1,
     };
   }
 
@@ -71,6 +76,10 @@ public abstract class Trader {
 
     var portfolio = broker.GetPortfolio();
     var balance = portfolio.currency + portfolio.asset * candle.close;
+
+    metrics.asset = portfolio.asset;
+    metrics.currency = portfolio.currency;
+    metrics.totalBalance = balance;
 
     if (trade.HasValue) {
       metrics.totalTrades += 1;
