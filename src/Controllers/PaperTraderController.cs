@@ -33,7 +33,7 @@ public class PaperTraderController : Controller {
     [Required] PapertraderConfig config
   );
 
-  [HttpPost("create")]
+  [HttpPost]
   public async Task<IActionResult> Create([FromBody]CreatePaperTraderRequest req) {
     var symbol = await Symbol.Get(req.config.dataset.symbolId);
     if (symbol == null) {
@@ -53,5 +53,20 @@ public class PaperTraderController : Controller {
     await Subscriber.Subscribe(trader.Id, symbol.Value.name, req.config.dataset.interval);
 
     return Ok(new ExtPaperTraderState(state));
+  }
+
+  [HttpDelete("{id}")]
+  public async Task<IActionResult> Delete(string id) {
+    var trader = await PaperTrader.Load(id);
+    if (trader == null) {
+      return NotFound();
+    }
+    var state = trader.Serialize();
+    state.endedAt = DateTime.Now;
+    await state.Update();
+
+    await Subscriber.UnSubscribe(trader.Id);
+
+    return Ok();
   }
 }
