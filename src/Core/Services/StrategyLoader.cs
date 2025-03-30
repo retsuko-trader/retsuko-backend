@@ -14,11 +14,37 @@ public record ExtStrategyInfo(
 );
 
 public static class StrategyLoader {
-  public static readonly StrategyInfo[] strategies = [
-    new StrategyInfo("SuperTrend", SuperTrendStrategy.DefaultConfig, SuperTrendStrategy.Create),
-    new StrategyInfo("Turtle", TurtleStrategy.DefaultConfig, TurtleStrategy.Create),
-    new StrategyInfo("SuperTrendTurtle", SuperTrendTurtleStrategy.DefaultConfig, SuperTrendTurtleStrategy.Create),
-  ];
+  public static readonly StrategyInfo[] strategies = LoadStrategies();
+
+  private static StrategyInfo[] LoadStrategies() {
+    var targetType = typeof(IStrategyCreate<>);
+
+    var strategyTypes = AppDomain.CurrentDomain
+      .GetAssemblies()
+      .SelectMany(assembly => assembly.GetTypes())
+      .Where(type => (
+        type.IsClass
+        && !type.IsAbstract
+        && type.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == targetType)
+      ));
+
+    var strategyInfos = strategyTypes
+      .Select(type => {
+        var name = type.GetProperty("Name")?.GetValue(null)?.ToString();
+        var defaultConfig = type.GetProperty("DefaultConfig")?.GetValue(null)?.ToString();
+        var createFn = type.GetMethod("Create");
+
+        if (name == null || defaultConfig == null || createFn == null) {
+          return null;
+        }
+
+        return new StrategyInfo(name, defaultConfig, config => (IStrategy)createFn.Invoke(null, [config])!);
+      })
+      .Where(info => info != null)
+      .ToArray() as StrategyInfo[];
+
+    return strategyInfos;
+  }
 
   public static IEnumerable<ExtStrategyInfo> GetStrategyEntries() {
     return strategies.Select(strategy => new ExtStrategyInfo(strategy.Name, strategy.Config));

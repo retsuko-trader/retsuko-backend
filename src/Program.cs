@@ -2,9 +2,10 @@ using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using Retsuko.Core;
 using Retsuko.Migrations;
 
-await Migrations.CreatePaperTrader();
+// await Migrations.CreatePaperTrader();
 
 const string SERVICE_NAME = "retsuko-backend";
 
@@ -48,6 +49,8 @@ var app = builder.Build();
 
 MyLogger.Logger = app.Logger;
 
-app.MapControllerRoute("default", "{controller=Home}/{action=Index}/{id?}");
+var strategies = string.Join(',', StrategyLoader.strategies.Select(x => x.Name));
+MyLogger.Logger.LogInformation("Available strategies: {strategies}", strategies);
 
+app.MapControllerRoute("default", "{controller=Home}/{action=Index}/{id?}");
 app.Run();
