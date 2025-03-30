@@ -1,4 +1,6 @@
 using System.Text.Json;
+using Binance.Net;
+using Binance.Net.Clients;
 using Retsuko;
 using Retsuko.Core;
 using Retsuko.Core.Indicators;
@@ -156,5 +158,97 @@ public static class Debugger {
     }
 
     Console.WriteLine(JsonSerializer.Serialize(new ExtPaperTraderState(state.Value)));
+  }
+
+  public static async Task TestBinance() {
+    var client = new BinanceRestClient(options => {
+      options.Environment = BinanceEnvironment.Testnet;
+      options.ApiCredentials = new CryptoExchange.Net.Authentication.ApiCredentials(
+        Environment.GetEnvironmentVariable("BINANCE_TESTNET_API_KEY") ?? "",
+        Environment.GetEnvironmentVariable("BINANCE_TESTNET_API_SECRET") ?? ""
+      );
+    });
+
+    var api = client.UsdFuturesApi;
+
+    var info = await api.ExchangeData.GetExchangeInfoAsync();
+    var filter = info.Data.Symbols.First(x => x.Pair == "BTCUSDT");
+
+    Console.WriteLine($"pricePrecision: {filter.PricePrecision} quantityPrecision: {filter.QuantityPrecision} ");
+
+    var balances = await api.Account.GetBalancesAsync();
+    Console.WriteLine(JsonSerializer.Serialize(balances.Data.Where(x => x.WalletBalance > 0), new JsonSerializerOptions() {
+      WriteIndented = true
+    }));
+
+    // await api.Account.ChangeInitialLeverageAsync("BTCUSDT", 20);
+
+    var rate = 0.01m;
+
+    var balance = balances.Data.First(x => x.Asset == "USDT").WalletBalance;
+
+    var price = Math.Round((await api.ExchangeData.GetPriceAsync("BTCUSDT")).Data.Price, filter.PricePrecision);
+
+    var account = await api.Account.GetAccountInfoV3Async();
+    var totalBalance = account.Data.TotalCrossWalletBalance;
+
+    Console.WriteLine(JsonSerializer.Serialize(account.Data, new JsonSerializerOptions() {
+      WriteIndented = true
+    }));
+    return;
+
+    var quantity = Math.Round(totalBalance * rate / price, filter.QuantityPrecision);
+    Console.WriteLine($"Price: {price} Balance: {balance} Quantity: {quantity}");
+
+    var shortOrder = await api.Trading.PlaceOrderAsync(
+      symbol: "BTCUSDT",
+      side: Binance.Net.Enums.OrderSide.Sell,
+      type: Binance.Net.Enums.FuturesOrderType.Limit,
+      quantity: (decimal)quantity,
+      price: price,
+      timeInForce: Binance.Net.Enums.TimeInForce.GoodTillCanceled
+    );
+    if (shortOrder.Error != null) {
+      Console.WriteLine(shortOrder.Error);
+      return;
+    }
+
+    Console.ReadLine();
+
+    account = await api.Account.GetAccountInfoV3Async();
+    Console.WriteLine(account.Data.Assets.First(x => x.Asset == "BTC").MarginBalance);
+
+    return;
+
+    var order = await api.Trading.PlaceOrderAsync(
+      symbol: "BTCUSDT",
+      side: Binance.Net.Enums.OrderSide.Buy,
+      type: Binance.Net.Enums.FuturesOrderType.Limit,
+      quantity: quantity,
+      price: price,
+      timeInForce: Binance.Net.Enums.TimeInForce.GoodTillCanceled
+    );
+
+
+    var positions = await api.Trading.GetPositionsAsync();
+    var pos = positions.Data.First(x => x.Symbol == "BTCUSDT");
+    Console.WriteLine(pos.PositionAmt);
+
+    Console.ReadLine();
+
+    account = await api.Account.GetAccountInfoV3Async();
+
+    Console.WriteLine(JsonSerializer.Serialize(account.Data, new JsonSerializerOptions() {
+      WriteIndented = true
+    }));
+
+    await api.Trading.PlaceOrderAsync(
+      symbol: "BTCUSDT",
+      side: Binance.Net.Enums.OrderSide.Sell,
+      type: Binance.Net.Enums.FuturesOrderType.Limit,
+      quantity: pos.PositionAmt,
+      price: price,
+      timeInForce: Binance.Net.Enums.TimeInForce.GoodTillCanceled
+    );
   }
 }
