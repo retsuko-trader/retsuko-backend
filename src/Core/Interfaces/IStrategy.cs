@@ -7,6 +7,7 @@ public interface IStrategy: ISerializable {
 }
 
 public interface IStrategyCreate<T> where T: IStrategyCreate<T> {
+  static abstract string Name { get; }
   static abstract string DefaultConfig { get; }
   static abstract T Create(string config);
 }

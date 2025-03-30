@@ -28,9 +28,9 @@ public class PaperBroker: IBroker, ISerializable {
     var confidence = signal.confidence;
 
     var handled = false;
-    if (kind == SignalKind.@long) {
+    if (kind == SignalKind.openLong) {
       handled = HandleLong(candle, confidence);
-    } else if (kind == SignalKind.@short) {
+    } else if (kind == SignalKind.openShort) {
       handled = HandleShort(candle, confidence);
     } else if (kind == SignalKind.closeLong) {
       if (position?.kind == PositionKind.@long) {

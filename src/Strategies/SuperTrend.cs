@@ -30,6 +30,7 @@ public class SuperTrendStrategy: Strategy<SuperTrendStrategyConfig>, IStrategyCr
   private double confidence;
   private double prevBuyConfidence;
 
+  public static string Name => "SuperTrend";
   public static string DefaultConfig => JsonSerializer.Serialize(new SuperTrendStrategyConfig {
     atrPeriod = 7,
     bandFactor = 3,
@@ -78,13 +79,13 @@ public class SuperTrendStrategy: Strategy<SuperTrendStrategyConfig>, IStrategyCr
       }
 
       prevBuyConfidence = conf;
-      return new Signal(SignalKind.@long, conf);
+      return new Signal(SignalKind.openLong, conf);
     }
 
     if (candle.close < trend.superTrend) {
       stopLoss.End();
       prevBuyConfidence = 0;
-      return Signal.@short;
+      return Signal.openShort;
     }
 
     return null;

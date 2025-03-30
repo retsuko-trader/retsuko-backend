@@ -27,6 +27,7 @@ public class TurtleStrategy: Strategy<TurtleStrategyConfig>, IStrategyCreate<Tur
   private int candlesLength;
   private IIndicator sma;
 
+  public static string Name => "Turtle";
   public static string DefaultConfig => JsonSerializer.Serialize(new TurtleStrategyConfig {
     enterFast = 20,
     exitFast = 10,
@@ -66,7 +67,7 @@ public class TurtleStrategy: Strategy<TurtleStrategyConfig>, IStrategyCreate<Tur
     }
 
     if (status == Result.OPEN_FLONG || status == Result.OPEN_SLONG) {
-      return Signal.@long;
+      return Signal.openLong;
     }
     if (status == Result.CLOSE_FAST || status == Result.CLOSE_SLOW) {
       return Signal.closeLong;

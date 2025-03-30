@@ -25,6 +25,7 @@ public class SuperTrendTurtleStrategy: Strategy<SuperTrendTurtleStrategyConfig>,
   private Signal? superTrendSignal;
   private Signal? turtleSignal;
 
+  public static string Name => "SuperTrendTurtle";
   public static string DefaultConfig => JsonSerializer.Serialize(new SuperTrendTurtleStrategyConfig {
     atrPeriod = 7,
     bandFactor = 3,
@@ -82,12 +83,12 @@ public class SuperTrendTurtleStrategy: Strategy<SuperTrendTurtleStrategyConfig>,
       return null;
     }
 
-    if (superTrendSignal.kind == SignalKind.@long && turtleSignal.kind == SignalKind.@long) {
+    if (superTrendSignal.kind == SignalKind.openLong && turtleSignal.kind == SignalKind.openLong) {
       return superTrendSignal;
     }
 
-    var superTrendShort = superTrendSignal.kind == SignalKind.@short || superTrendSignal.kind == SignalKind.closeLong;
-    var turtleShort = turtleSignal.kind == SignalKind.@short || turtleSignal.kind == SignalKind.closeLong;
+    var superTrendShort = superTrendSignal.kind == SignalKind.openShort || superTrendSignal.kind == SignalKind.closeLong;
+    var turtleShort = turtleSignal.kind == SignalKind.openShort || turtleSignal.kind == SignalKind.closeLong;
 
     if (superTrendShort && turtleShort) {
       return superTrendSignal;

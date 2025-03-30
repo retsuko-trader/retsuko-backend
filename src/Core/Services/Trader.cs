@@ -44,7 +44,7 @@ public abstract class Trader {
         if (trades.Count > 0) {
           var lastTrade = trades[^1];
 
-          if (lastTrade.signal == SignalKind.@long || lastTrade.signal == SignalKind.@short) {
+          if (lastTrade.signal == SignalKind.openLong || lastTrade.signal == SignalKind.openShort) {
             var currBalance = trade.Value.TotalBalance;
             var prevBalance = lastTrade.TotalBalance;
             var profit = (currBalance - prevBalance) / prevBalance;
