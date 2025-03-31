@@ -7,7 +7,7 @@ public record struct PapertraderDatasetConfig(
   int symbolId,
   KlineInterval interval,
   int preloadCount
-);
+): IPreloadableDatasetConfig;
 
 public record struct PapertraderCreateConfig(
   string name,

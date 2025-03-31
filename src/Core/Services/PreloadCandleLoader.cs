@@ -1,9 +1,9 @@
 namespace Retsuko.Core;
 
-public class PapertraderCandleLoader: ICandleLoader {
-  private PapertraderDatasetConfig config;
+public class PreloadCandleLoader: ICandleLoader {
+  private IPreloadableDatasetConfig config;
 
-  public PapertraderCandleLoader(PapertraderDatasetConfig config) {
+  public PreloadCandleLoader(IPreloadableDatasetConfig config) {
     this.config = config;
   }
 

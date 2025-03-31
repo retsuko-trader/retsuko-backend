@@ -6,6 +6,7 @@ public class Database {
   public static DuckDBConnection Candle { get; } = CreateConnection("db/candles.db");
   public static DuckDBConnection Backtest { get; } = CreateConnection("db/backtests.db");
   public static DuckDBConnection PaperTrader { get; } = CreateConnection("db/paperTraders.db");
+  public static DuckDBConnection LiveTrader { get; } = CreateConnection("db/liveTraders.db");
 
 
   public static DuckDBConnection CreateConnection(string filename, bool readOnly = false) {
