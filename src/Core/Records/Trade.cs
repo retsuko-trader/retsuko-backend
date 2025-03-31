@@ -1,3 +1,5 @@
+using Binance.Net.Objects.Models.Futures;
+
 namespace Retsuko.Core;
 
 public record struct Trade(
@@ -7,7 +9,8 @@ public record struct Trade(
   double asset,
   double currency,
   double price,
-  double profit
+  double profit,
+  CryptoExchange.Net.Objects.WebCallResult<BinanceUsdFuturesOrder>? order = null
 ) {
   public double TotalBalance => asset * price + currency;
 }

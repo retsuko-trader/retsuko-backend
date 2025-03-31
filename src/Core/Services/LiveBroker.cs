@@ -113,7 +113,8 @@ public class LiveBroker: IBroker, ISerializable {
       portfolio.asset,
       portfolio.currency,
       candle.close,
-      0
+      0,
+      order
     );
   }
 

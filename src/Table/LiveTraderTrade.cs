@@ -9,6 +9,7 @@ public record struct LiveTraderTrade(
   DateTime ts,
   SignalKind signal,
   double confidence,
+  long? orderId,
   double asset,
   double currency,
   double price,
@@ -31,10 +32,11 @@ public record struct LiveTraderTrade(
         reader.GetDateTime(2),
         (SignalKind)reader.GetInt32(3),
         reader.GetDouble(4),
-        reader.GetDouble(5),
+        reader.IsDBNull(5) ? null : reader.GetInt64(5),
         reader.GetDouble(6),
         reader.GetDouble(7),
-        reader.GetDouble(8)
+        reader.GetDouble(8),
+        reader.GetDouble(9)
       );
       trades.Add(trade);
     }
@@ -50,6 +52,7 @@ public record struct LiveTraderTrade(
       .AppendValue(ts)
       .AppendValue(signal.ToString())
       .AppendValue(confidence)
+      .AppendValue(orderId)
       .AppendValue(asset)
       .AppendValue(currency)
       .AppendValue(price)

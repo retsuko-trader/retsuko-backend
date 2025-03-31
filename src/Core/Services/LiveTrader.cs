@@ -39,12 +39,19 @@ public class LiveTrader: Trader, ISerializable<LiveTraderState> {
     if (trade.HasValue) {
       var id = new Visus.Cuid.Cuid2().ToString();
 
+      var order = trade.Value.order;
+      if (order != null) {
+        var liveTraderOrder = LiveTraderOrder.From(state.id, id, order);
+        LiveOrderTracker.StartTrack(liveTraderOrder);
+      }
+
       var entity = new LiveTraderTrade(
         id: id,
         traderId: Id,
         ts: DateTime.Now,
         signal: trade.Value.signal,
         confidence: trade.Value.confidence,
+        orderId: trade.Value.order?.Data?.Id,
         asset: trade.Value.asset,
         currency: trade.Value.currency,
         price: trade.Value.price,
