@@ -192,7 +192,7 @@ public static class Debugger {
     var account = await api.Account.GetAccountInfoV3Async();
     var totalBalance = account.Data.TotalCrossWalletBalance;
 
-    Console.WriteLine(JsonSerializer.Serialize(account.Data, new JsonSerializerOptions() {
+    Console.WriteLine(JsonSerializer.Serialize(account.Data.Assets, new JsonSerializerOptions() {
       WriteIndented = true
     }));
     return;

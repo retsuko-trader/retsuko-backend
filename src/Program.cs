@@ -3,6 +3,9 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Retsuko.Core;
+using Retsuko.Migrations;
+
+await Migrations.CreateLiveTrader();
 
 const string SERVICE_NAME = "retsuko-backend";
 

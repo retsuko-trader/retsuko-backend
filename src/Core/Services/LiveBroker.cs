@@ -13,7 +13,7 @@ public class LiveBroker: IBroker, ISerializable {
   private BinanceRestClient client;
   private IBinanceRestClientUsdFuturesApi api => client.UsdFuturesApi;
 
-  public double InitialBalance => 0;
+  public double InitialBalance { get; private set; } = 1;
 
   private Portfolio portfolio;
 
@@ -38,15 +38,17 @@ public class LiveBroker: IBroker, ISerializable {
 
   public async Task<Trade?> HandleAdvice(Candle candle, Signal signal) {
     var symbol = await Symbol.Get(candle.symbolId);
+    // TODO: fix asset name
     var symbolName = symbol.Value.name;
+    var asset = symbolName.Replace("USDT", "");
 
     await api.Account.ChangeInitialLeverageAsync(symbolName, config.leverege);
 
     var account = await api.Account.GetAccountInfoV3Async();
-    var assetInfo = account.Data.Assets.First(x => x.Asset == symbolName);
+    var assetInfo = account.Data.Assets.First(x => x.Asset == asset);
     var currencyInfo = account.Data.Assets.First(x => x.Asset == "USDT");
 
-    var position = account.Data.Positions.First(x => x.Symbol == symbolName);
+    var position = account.Data.Positions.FirstOrDefault(x => x.Symbol == symbolName);
 
     portfolio.totalBalance = (double)account.Data.TotalWalletBalance;
     portfolio.asset = (double?)assetInfo?.WalletBalance ?? 0.0;
@@ -57,6 +59,11 @@ public class LiveBroker: IBroker, ISerializable {
 
     CryptoExchange.Net.Objects.WebCallResult<BinanceUsdFuturesOrder>? order = null;
 
+    if (InitialBalance == 1) {
+      InitialBalance = portfolio.totalBalance;
+    }
+
+    // TODO: check current open orders
     if (signal.kind == SignalKind.openLong) {
       var expectAmount = portfolio.totalBalance * 0.95 * config.ratio * signal.confidence;
       var quantity = Math.Round(expectAmount / candle.close, filter.QuantityPrecision);
@@ -74,7 +81,7 @@ public class LiveBroker: IBroker, ISerializable {
         symbol: symbol.Value.name,
         side: OrderSide.Sell,
         type: FuturesOrderType.Limit,
-        quantity: (decimal)portfolio.asset,
+        quantity: position?.PositionAmount ?? 0,
         price: (decimal)candle.close,
         timeInForce: TimeInForce.GoodTillCanceled
       );
@@ -103,6 +110,7 @@ public class LiveBroker: IBroker, ISerializable {
     }
 
     if (order == null) {
+      MyLogger.Logger.LogError("Order is null");
       return null;
     }
 
@@ -118,20 +126,26 @@ public class LiveBroker: IBroker, ISerializable {
     );
   }
 
+  record InnerState(
+    LiveBrokerConfig config,
+    double initialBalance
+  );
+
   public Portfolio GetPortfolio() {
     return portfolio;
   }
 
   public string Serialize() {
-    return JsonSerializer.Serialize(config);
+    return JsonSerializer.Serialize<InnerState>(new (config, InitialBalance));
   }
 
   public void Deserialize(string state) {
-    var x = JsonSerializer.Deserialize<LiveBrokerConfig>(state);
+    var x = JsonSerializer.Deserialize<InnerState>(state);
     if (x == null) {
       return;
     }
 
-    config = x;
+    config = x.config;
+    InitialBalance = x.initialBalance;
   }
 }
