@@ -141,15 +141,20 @@ public static partial class Migrations {
     command.CommandText = @"CREATE TABLE IF NOT EXISTS live_trader_order (
       trader_id VARCHAR NOT NULL,
       trade_id VARCHAR NOT NULL,
-      order_id DOUBLE NOT NULL,
+      order_id LONG NOT NULL,
+      root_order_id LONG,
+      prev_order_id LONG,
+      next_order_id LONG,
       error TEXT,
-      closed BOOLEAN NOT NULL,
+      closed_at TIMESTAMP,
+      cancelled_at TIMESTAMP,
       symbol TEXT NOT NULL,
       pair TEXT NOT NULL,
       price DOUBLE NOT NULL,
       average_price DOUBLE NOT NULL,
       quantity_filled DOUBLE NOT NULL,
       quantity DOUBLE NOT NULL,
+      status INT NOT NULL,
       side INT NOT NULL,
       time_in_force INT NOT NULL,
       type INT NOT NULL,
@@ -161,6 +166,8 @@ public static partial class Migrations {
     )";
     await command.ExecuteNonQueryAsync();
     command.CommandText = "CREATE INDEX IF NOT EXISTS live_trader_order_trader_id ON live_trader_order (trader_id)";
+    await command.ExecuteNonQueryAsync();
+    command.CommandText = "CREATE INDEX IF NOT EXISTS live_trader_order_root_order_id ON live_trader_order (root_order_id)";
     await command.ExecuteNonQueryAsync();
   }
 }
