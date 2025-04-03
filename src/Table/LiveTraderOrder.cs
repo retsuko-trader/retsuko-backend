@@ -113,14 +113,14 @@ public record struct LiveTraderOrder(
       .AppendValue(averagePrice)
       .AppendValue(quantityFilled)
       .AppendValue(quantity)
-      .AppendValue(status)
-      .AppendValue(side)
-      .AppendValue(timeInForce)
-      .AppendValue(type)
-      .AppendValue(orderType)
+      .AppendValue((int)status)
+      .AppendValue((int)side)
+      .AppendValue((int)timeInForce)
+      .AppendValue((int)type)
+      .AppendValue((int)orderType)
       .AppendValue(updateTime)
       .AppendValue(createTime)
-      .AppendValue(positionSide)
+      .AppendValue((int)positionSide)
       .EndRow();
     appender.Close();
   }

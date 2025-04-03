@@ -42,7 +42,11 @@ public class LiveTrader: Trader, ISerializable<LiveTraderState> {
       var order = trade.Value.order;
       if (order != null) {
         var liveTraderOrder = LiveTraderOrder.From(state.id, id, order);
-        LiveOrderTracker.StartTrack(liveTraderOrder);
+
+        if (liveTraderOrder.error == null) {
+          var client = (broker as LiveBroker)!.client;
+          LiveOrderTracker.StartTrack(client, liveTraderOrder);
+        }
       }
 
       var entity = new LiveTraderTrade(

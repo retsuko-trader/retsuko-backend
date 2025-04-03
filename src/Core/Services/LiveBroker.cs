@@ -10,7 +10,7 @@ namespace Retsuko.Core;
 public class LiveBroker: IBroker, ISerializable {
   private LiveBrokerConfig config;
 
-  private BinanceRestClient client;
+  public BinanceRestClient client { get; private set; }
   private IBinanceRestClientUsdFuturesApi api => client.UsdFuturesApi;
 
   public double InitialBalance { get; private set; } = 1;
@@ -42,7 +42,7 @@ public class LiveBroker: IBroker, ISerializable {
     var symbolName = symbol.Value.name;
     var asset = symbolName.Replace("USDT", "");
 
-    await api.Account.ChangeInitialLeverageAsync(symbolName, config.leverege);
+    await api.Account.ChangeInitialLeverageAsync(symbolName, config.leverage);
 
     var account = await api.Account.GetAccountInfoV3Async();
     var assetInfo = account.Data.Assets.First(x => x.Asset == asset);

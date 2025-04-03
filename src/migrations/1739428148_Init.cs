@@ -161,8 +161,7 @@ public static partial class Migrations {
       order_type INT NOT NULL,
       update_time TIMESTAMP NOT NULL,
       create_time TIMESTAMP NOT NULL,
-      position_side INT NOT NULL,
-      PRIMARY KEY (trader_id, trade_id, order_id)
+      position_side INT NOT NULL
     )";
     await command.ExecuteNonQueryAsync();
     command.CommandText = "CREATE INDEX IF NOT EXISTS live_trader_order_trader_id ON live_trader_order (trader_id)";
