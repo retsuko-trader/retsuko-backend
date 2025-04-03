@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using System.Text.Json;
 using Binance.Net;
 using Binance.Net.Clients;
@@ -250,5 +251,48 @@ public static class Debugger {
       price: price,
       timeInForce: Binance.Net.Enums.TimeInForce.GoodTillCanceled
     );
+  }
+
+  public static async Task TestDownloader() {
+    // list: s3 api
+    // https://s3-ap-northeast-1.amazonaws.com/data.binance.vision?delimiter=/&prefix=data/futures/um/daily/klines/
+    var url = "https://data.binance.vision/data/futures/um/daily/klines/BTCUSDT/1m/BTCUSDT-1m-2025-04-02.zip";
+
+    using var client = new HttpClient();
+    using var resp = await client.GetAsync(url);
+    using var zs = await resp.Content.ReadAsStreamAsync();
+    using var zip = new ZipArchive(zs);
+
+    var i = 0;
+    foreach (var entry in zip.Entries) {
+      using var fs = entry.Open();
+      using var sr = new StreamReader(fs);
+
+
+      await sr.ReadLineAsync();
+
+      while (!sr.EndOfStream) {
+        var line = await sr.ReadLineAsync();
+        var row = line!.Split(',');
+
+        var openTime = DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(row[0]));
+        var open = double.Parse(row[1]);
+        var high = double.Parse(row[2]);
+        var low = double.Parse(row[3]);
+        var close = double.Parse(row[4]);
+        var volume = double.Parse(row[5]);
+        var closeTime = DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(row[6]));
+        var quoteVolume = double.Parse(row[7]);
+        var count = int.Parse(row[8]);
+        var takerBuyVolume = double.Parse(row[9]);
+        var takerBuyQuoteVolume = double.Parse(row[10]);
+
+        Console.WriteLine($"{openTime} {open} {high} {low} {close} {volume} {closeTime} {quoteVolume} {count} {takerBuyVolume} {takerBuyQuoteVolume}");
+
+        if (i++ > 10) {
+          break;
+        }
+      }
+    }
   }
 }
