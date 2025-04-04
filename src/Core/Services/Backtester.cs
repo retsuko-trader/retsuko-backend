@@ -25,7 +25,7 @@ public class Backtester: Trader {
       }
 
       stack.Add(new DebugIndicator(
-        ts: (int)candle.ts.ToUnixTimestamp(),
+        ts: new DateTimeOffset(candle.ts).ToUnixTimeMilliseconds(),
         value: debug.value
       ));
       debugIndicators[key] = stack;
@@ -40,7 +40,7 @@ public class Backtester: Trader {
       dts.Add(new ExtDebugIndicator(
         name: key.Item1,
         index: key.Item2,
-        values: stack.ToArray()
+        values: stack
       ));
     }
 

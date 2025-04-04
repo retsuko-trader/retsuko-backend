@@ -1,7 +1,7 @@
 namespace Retsuko.Core;
 
 public record DebugIndicator(
-  int ts,
+  long ts,
   float value
 );
 
@@ -14,5 +14,5 @@ public record DebugIndicatorInput(
 public record ExtDebugIndicator(
   string name,
   int index,
-  DebugIndicator[] values
+  IEnumerable<DebugIndicator> values
 );
