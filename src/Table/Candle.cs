@@ -1,4 +1,5 @@
 using Binance.Net.Enums;
+using DuckDB.NET.Data;
 
 namespace Retsuko;
 
@@ -112,5 +113,40 @@ public record struct Candle(
     }
 
     return result;
+  }
+
+  public static async Task<IReadOnlyList<Candle>> List(int symbolId, KlineInterval interval, DateTime? start, DateTime? end, float? sampleRate) {
+    var symbol = await Symbol.Get(symbolId);
+    if (symbol == null) {
+      throw new ArgumentException($"Symbol {symbolId} not found");
+    }
+
+    using var db = Database.CreateCandleDatabase(symbol.Value.name, true);
+    using var command = db.CreateCommand();
+
+    command.CommandText = $"SELECT * FROM candle WHERE interval = $interval AND ts >= $start AND ts <= $end ORDER BY ts ASC USING SAMPLE $sampleRate";
+    command.Parameters.Add(new DuckDBParameter("interval", (int)interval));
+    command.Parameters.Add(new DuckDBParameter("start", start ?? DateTimeOffset.MinValue));
+    command.Parameters.Add(new DuckDBParameter("end", end ?? DateTimeOffset.MaxValue));
+    command.Parameters.Add(new DuckDBParameter("sampleRate", sampleRate ?? 1.0f));
+
+    var reader = await command.ExecuteReaderAsync();
+    var candles = new List<Candle>();
+
+    var t = 0f;
+    while (reader.Read()) {
+      if (sampleRate != null) {
+        t += sampleRate.Value;
+        if (t < 1.0f) {
+          continue;
+        }
+        t = 0f;
+      }
+
+      var candle = From(Market.futures, symbolId, interval, reader);
+      candles.Add(candle);
+    }
+
+    return candles;
   }
 }

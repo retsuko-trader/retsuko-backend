@@ -1,3 +1,4 @@
+using Binance.Net.Enums;
 using Microsoft.AspNetCore.Mvc;
 using Retsuko.Core;
 
@@ -9,6 +10,19 @@ public class CandleController : Controller {
   public async Task<IActionResult> GetDataset() {
     var result = await Dataset.List();
     return Ok(result);
+  }
+
+  [HttpGet("candle/{market}/{symbolId}/{interval}")]
+  public async Task<IActionResult> GetCandle(
+    int market,
+    int symbolId,
+    KlineInterval interval,
+    [FromQuery] DateTime? start,
+    [FromQuery] DateTime? end,
+    [FromQuery] float? sampleRate
+  ) {
+    var candles = await Candle.List(symbolId, interval, start, end, sampleRate);
+    return Ok(candles);
   }
 
   [HttpGet("symbol")]
