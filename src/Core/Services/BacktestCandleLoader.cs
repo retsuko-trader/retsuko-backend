@@ -29,7 +29,7 @@ public class BacktestCandleLoader: ICandleLoader, IDisposable {
     using var command = db.CreateCommand();
     command.UseStreamingMode = true;
 
-    command.CommandText = "SELECT ts, open, high, low, close, volume FROM candle WHERE market = $market AND symbolId = $symbolId AND interval = $interval AND ts BETWEEN $start AND $end ORDER BY ts ASC";
+    command.CommandText = "SELECT * FROM candle WHERE market = $market AND symbolId = $symbolId AND interval = $interval AND ts BETWEEN $start AND $end ORDER BY ts ASC";
     command.Parameters.Add(new DuckDBParameter("market", (int)config.market));
     command.Parameters.Add(new DuckDBParameter("symbolId", config.symbolId));
     command.Parameters.Add(new DuckDBParameter("interval", config.interval));

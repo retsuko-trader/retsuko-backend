@@ -2,9 +2,9 @@ namespace Retsuko.Core;
 
 public record struct TraderReport(
   BacktestConfig config,
-  Trade[] trades,
+  IEnumerable<Trade> trades,
   TraderMetrics metrics,
-  Dictionary<string, List<DebugIndicator>> debugIndicators
+  IEnumerable<ExtDebugIndicator> debugIndicators
 );
 
 public record struct TraderMetrics(

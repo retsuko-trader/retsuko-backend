@@ -2,7 +2,7 @@
 namespace Retsuko.Core;
 
 public class Backtester: Trader {
-  private readonly Dictionary<string, List<DebugIndicator>> debugIndicators = [];
+  private readonly Dictionary<(string, int), List<DebugIndicator>> debugIndicators = [];
 
   private readonly BacktestConfig config;
 
@@ -18,28 +18,37 @@ public class Backtester: Trader {
 
     var debugs = await strategy.Debug(candle);
     foreach (var debug in debugs) {
-      if (!debugIndicators.TryGetValue(debug.name, out var stack)) {
+      var key = (debug.name, debug.index);
+      if (!debugIndicators.TryGetValue(key, out var stack)) {
         stack = [];
-        debugIndicators[debug.name] = stack;
+        debugIndicators[key] = stack;
       }
 
       stack.Add(new DebugIndicator(
         ts: (int)candle.ts.ToUnixTimestamp(),
-        index: debug.index,
         value: debug.value
       ));
-      debugIndicators[debug.name] = stack;
+      debugIndicators[key] = stack;
     }
 
     return trade;
   }
 
   public TraderReport GetReport() {
+    var dts = new List<ExtDebugIndicator>();
+    foreach (var (key, stack) in debugIndicators) {
+      dts.Add(new ExtDebugIndicator(
+        name: key.Item1,
+        index: key.Item2,
+        values: stack.ToArray()
+      ));
+    }
+
     return new TraderReport(
       config,
-      trades.ToArray(),
+      trades,
       metrics,
-      debugIndicators
+      dts
     );
   }
 }
