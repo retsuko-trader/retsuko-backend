@@ -137,6 +137,20 @@ public class SuperTrendStrategy: Strategy<SuperTrendStrategyConfig>, IStrategyCr
     return true;
   }
 
+  static readonly string SUPERTREND_NAME = string.Intern("supertrend");
+  static readonly string ATR_NAME = string.Intern("atr");
+  static readonly string CONFIDENCE_NAME = string.Intern("confidence");
+
+  public override async Task<IEnumerable<DebugIndicatorInput>> Debug(Candle candle) {
+    await ValueTask.CompletedTask;
+
+    return [
+      new(SUPERTREND_NAME, 0, (float)trend.superTrend),
+      new(ATR_NAME, 1, (float)atr.Value),
+      new(CONFIDENCE_NAME, 2, (float)confidence),
+    ];
+  }
+
   record SerializedState(
     SuperTrendStrategyConfig Config,
     State trend,

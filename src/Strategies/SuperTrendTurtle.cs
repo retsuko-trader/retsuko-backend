@@ -97,6 +97,10 @@ public class SuperTrendTurtleStrategy: Strategy<SuperTrendTurtleStrategyConfig>,
     return null;
   }
 
+  public override async Task<IEnumerable<DebugIndicatorInput>> Debug(Candle candle) {
+    return await superTrend.Debug(candle);
+  }
+
   record SerializedState(
     string superTrend,
     string turtle,

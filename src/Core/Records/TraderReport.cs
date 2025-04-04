@@ -3,9 +3,9 @@ namespace Retsuko.Core;
 public record struct TraderReport(
   BacktestConfig config,
   Trade[] trades,
-  TraderMetrics metrics
-) {
-}
+  TraderMetrics metrics,
+  Dictionary<string, List<DebugIndicator>> debugIndicators
+);
 
 public record struct TraderMetrics(
   double startBalance,
