@@ -1,3 +1,4 @@
+using System.Data.Common;
 using Binance.Net.Enums;
 using Binance.Net.Objects.Models.Futures;
 using DuckDB.NET.Data;
@@ -93,6 +94,50 @@ public record struct LiveTraderOrder(
       createTime: orderData.CreateTime,
       positionSide: orderData.PositionSide
     );
+  }
+
+  public static LiveTraderOrder From(DbDataReader reader) {
+    return new LiveTraderOrder(
+      traderId: reader.GetString(0),
+      tradeId: reader.GetString(1),
+      orderId: reader.GetInt64(2),
+      rootOrderId: reader.GetInt64(3),
+      prevOrderId: reader.IsDBNull(4) ? null : reader.GetInt64(4),
+      nextOrderId: reader.IsDBNull(5) ? null : reader.GetInt64(5),
+      error: reader.IsDBNull(6) ? null : reader.GetString(6),
+      closedAt: reader.IsDBNull(7) ? null : reader.GetDateTime(7),
+      cancelledAt: reader.IsDBNull(8) ? null : reader.GetDateTime(8),
+      symbol: reader.GetString(9),
+      pair: reader.GetString(10),
+      price: reader.GetDouble(11),
+      averagePrice: reader.GetDouble(12),
+      quantityFilled: reader.GetDouble(13),
+      quantity: reader.GetDouble(14),
+      status: (OrderStatus)reader.GetInt32(15),
+      side: (OrderSide)reader.GetInt32(16),
+      timeInForce: (TimeInForce)reader.GetInt32(17),
+      type: (FuturesOrderType)reader.GetInt32(18),
+      orderType: (FuturesOrderType)reader.GetInt32(19),
+      updateTime: reader.GetDateTime(20),
+      createTime: reader.GetDateTime(21),
+      positionSide: (PositionSide)reader.GetInt32(22)
+    );
+  }
+
+  public static async Task<IReadOnlyList<LiveTraderOrder>> List(string traderId) {
+    using var command = Database.LiveTrader.CreateCommand();
+    command.CommandText = $"SELECT * FROM {TableName} WHERE trader_id = $traderId ORDER BY create_time ASC";
+    command.Parameters.Add(new DuckDBParameter("traderId", traderId));
+    var reader = await command.ExecuteReaderAsync();
+    var orders = new List<LiveTraderOrder>();
+
+    while (reader.Read()) {
+      var order = From(reader);
+      orders.Add(order);
+    }
+
+    await reader.CloseAsync();
+    return orders;
   }
 
   public void Insert() {

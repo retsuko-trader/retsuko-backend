@@ -26,7 +26,12 @@ public class LiveTraderController : Controller {
   [HttpGet("{id}/trade")]
   public async Task<IActionResult> GetTrades(string id) {
     var trades = await LiveTraderTrade.List(id);
-    return Ok(trades);
+    var orders = await LiveTraderOrder.List(id);
+
+    return Ok(new {
+      trades,
+      orders,
+    });
   }
 
   public record CreateLiveTraderRequest(

@@ -41,6 +41,7 @@ public record struct LiveTraderTrade(
       trades.Add(trade);
     }
 
+    await reader.CloseAsync();
     return trades;
   }
 
