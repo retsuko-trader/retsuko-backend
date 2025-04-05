@@ -1,5 +1,7 @@
 # retsuko-backend
 
+![retsuko](imgs/retsuko.png)
+
 > WIP!
 
 > This project is intended for real-world use and is still under development after two refactorings. When it's finished, we'll make it public with a writeup.
