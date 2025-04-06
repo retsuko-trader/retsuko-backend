@@ -20,20 +20,7 @@ public class LiveBroker: IBroker, ISerializable {
   public LiveBroker(LiveBrokerConfig config) {
     this.config = config;
 
-    client = new BinanceRestClient(options => {
-      if (config.isTestNet) {
-        options.Environment = BinanceEnvironment.Testnet;
-        options.ApiCredentials = new CryptoExchange.Net.Authentication.ApiCredentials(
-          Environment.GetEnvironmentVariable("BINANCE_TESTNET_API_KEY") ?? "",
-          Environment.GetEnvironmentVariable("BINANCE_TESTNET_API_SECRET") ?? ""
-        );
-      } else {
-        options.ApiCredentials = new CryptoExchange.Net.Authentication.ApiCredentials(
-          Environment.GetEnvironmentVariable("BINANCE_API_KEY") ?? "",
-          Environment.GetEnvironmentVariable("BINANCE_API_SECRET") ?? ""
-        );
-      }
-    });
+    client = config.isTestNet ? Exchanger.TestNetClient : Exchanger.LiveClient;
   }
 
   public async Task<Trade?> HandleAdvice(Candle candle, Signal signal) {

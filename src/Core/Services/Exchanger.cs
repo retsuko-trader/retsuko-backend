@@ -1,3 +1,4 @@
+using Binance.Net;
 using Binance.Net.Clients;
 using Binance.Net.Enums;
 using Binance.Net.Interfaces.Clients.UsdFuturesApi;
@@ -8,6 +9,26 @@ public class Exchanger {
   public static BinanceRestClient Client { get; } = new BinanceRestClient();
 
   public static IBinanceRestClientUsdFuturesApi API => Client.UsdFuturesApi;
+
+  public static BinanceRestClient TestNetClient { get; } = CreateClient(true);
+  public static BinanceRestClient LiveClient { get; } = CreateClient(false);
+
+  private static BinanceRestClient CreateClient(bool isTestNet) {
+    return new BinanceRestClient(options => {
+      if (isTestNet) {
+        options.Environment = BinanceEnvironment.Testnet;
+        options.ApiCredentials = new CryptoExchange.Net.Authentication.ApiCredentials(
+          Environment.GetEnvironmentVariable("BINANCE_TESTNET_API_KEY") ?? "",
+          Environment.GetEnvironmentVariable("BINANCE_TESTNET_API_SECRET") ?? ""
+        );
+      } else {
+        options.ApiCredentials = new CryptoExchange.Net.Authentication.ApiCredentials(
+          Environment.GetEnvironmentVariable("BINANCE_API_KEY") ?? "",
+          Environment.GetEnvironmentVariable("BINANCE_API_SECRET") ?? ""
+        );
+      }
+    });
+  }
 
   public static async IAsyncEnumerable<Binance.Net.Interfaces.IBinanceKline> GetKlinesAsync(string symbol, KlineInterval interval, DateTime? startTime, DateTime? endTime) {
     var api = API.ExchangeData;
