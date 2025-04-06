@@ -40,7 +40,7 @@ public class CandleController : Controller {
 
   [HttpPost("update")]
   public async Task<IActionResult> Update() {
-    await Downloader.UpdateAll();
+    await Downloader.DownloadAll();
 
     return Ok();
   }

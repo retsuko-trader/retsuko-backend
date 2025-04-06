@@ -1,7 +1,12 @@
+using System.IO.Compression;
+using System.Web;
+using System.Xml;
 using Binance.Net.Clients;
 using Binance.Net.Enums;
+using DuckDB.NET.Data;
 using Retsuko;
 using Retsuko.Core;
+using Retsuko.Migrations;
 
 public static class Downloader {
   public static KlineInterval[] intervals = [
@@ -22,96 +27,198 @@ public static class Downloader {
     KlineInterval.OneMonth,
   ];
 
+  public record KlineDownloadInfo(
+    string symbol,
+    KlineInterval interval,
+    DateTime day,
+    string url
+  );
+
+  public static async Task<IReadOnlyList<string>> GetKlines() {
+    var url = "https://s3-ap-northeast-1.amazonaws.com/data.binance.vision?delimiter=/&prefix=data/futures/um/daily/klines/";
+
+    var klineList = new List<string>();
+    var iter = GetDataFromVision(url);
+    await foreach (var prefix in iter) {
+      var parts = prefix.Split('/');
+      var symbol = parts[parts.Length - 2];
+
+      klineList.Add(symbol);
+    }
+
+    return klineList;
+  }
+
+  public static async Task<IReadOnlyList<KlineInterval>> GetKlineIntervals(string symbol) {
+    var url = $"https://s3-ap-northeast-1.amazonaws.com/data.binance.vision?delimiter=/&prefix=data/futures/um/daily/klines/{symbol}/";
+    var intervalList = new List<KlineInterval>();
+
+    var iter = GetDataFromVision(url);
+    await foreach (var prefix in iter) {
+      var parts = prefix.Split('/');
+      var interval = parts[parts.Length - 2];
+
+      if (interval == "") {
+        continue;
+      }
+
+      intervalList.Add(interval.ToKlineInterval());
+    }
+
+    return intervalList;
+  }
+
+  public static async Task<IReadOnlyList<KlineDownloadInfo>> GetKlineArchives(string symbol, KlineInterval interval) {
+    var url = $"https://s3-ap-northeast-1.amazonaws.com/data.binance.vision?delimiter=/&prefix=data/futures/um/daily/klines/{symbol}/{interval.ToIntervalString()}/";
+    var result = new List<KlineDownloadInfo>();
+
+    var iter = GetDataFromVision(url, null, "Contents", "Key");
+    await foreach (var prefix in iter) {
+      if (!prefix.EndsWith(".zip")) {
+        continue;
+      }
+
+      var downloadUrl = $"https://data.binance.vision/{prefix}";
+      var parts = prefix.Split('/');
+
+      var filename = parts[parts.Length - 1];
+      var parts2 = filename.Split('-');
+      var year = int.Parse(parts2[2]);
+      var month = int.Parse(parts2[3]);
+      var day = int.Parse(parts2[4].Split('.')[0]);
+
+      result.Add(new KlineDownloadInfo(symbol, interval, new DateTime(year, month, day), downloadUrl));
+    }
+
+    return result;
+  }
+
+  private static async IAsyncEnumerable<string> GetDataFromVision(string url, string? marker = null, string outer = "CommonPrefixes", string inner = "Prefix") {
+    using var client = new HttpClient();
+    using var resp = await client.GetAsync($"{url}&marker={HttpUtility.UrlEncode(marker)}");
+    var xml = new XmlDocument();
+    xml.Load(await resp.Content.ReadAsStreamAsync());
+
+    var commonPrefixes = xml.GetElementsByTagName(outer);
+    foreach (XmlNode commonPrefix in commonPrefixes) {
+      var prefix = commonPrefix[inner]!.InnerText;
+
+      yield return prefix;
+    }
+
+    var nextMarker = xml.GetElementsByTagName("NextMarker");
+    if (nextMarker != null && nextMarker.Count > 0) {
+      marker = nextMarker[0]!.InnerText;
+      await foreach (var prefix in GetDataFromVision(url, marker, outer, inner)) {
+        yield return prefix;
+      }
+    }
+  }
+
+  private static async Task DownloadArchive(DuckDBConnection db, KlineDownloadInfo archive, Symbol[] symbols, CancellationToken t) {
+    using var client = new HttpClient();
+    using var resp = await client.GetAsync(archive.url, t);
+    using var zs = await resp.Content.ReadAsStreamAsync(t);
+    using var zip = new ZipArchive(zs);
+
+    using var appender = db.CreateAppender(Candle.TableName);
+    foreach (var entry in zip.Entries) {
+      using var fs = entry.Open();
+      using var sr = new StreamReader(fs);
+
+      await sr.ReadLineAsync(t);
+
+      while (!sr.EndOfStream) {
+        var line = await sr.ReadLineAsync(t);
+        var parts = line!.Split(',');
+
+        var openTime = DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(parts[0]));
+        var open = double.Parse(parts[1]);
+        var high = double.Parse(parts[2]);
+        var low = double.Parse(parts[3]);
+        var close = double.Parse(parts[4]);
+        var volume = double.Parse(parts[5]);
+        var closeTime = DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(parts[6]));
+        var quoteVolume = double.Parse(parts[7]);
+        var count = int.Parse(parts[8]);
+        var takerBuyVolume = double.Parse(parts[9]);
+        var takerBuyQuoteVolume = double.Parse(parts[10]);
+
+        var symbol = symbols.First(x => x.name == archive.symbol);
+
+        var candle = new Candle(
+          market: Market.futures,
+          symbolId: symbol.id,
+          interval: archive.interval,
+          ts: openTime.DateTime,
+          open: open,
+          high: high,
+          low: low,
+          close: close,
+          volume: volume
+        );
+        var row = appender.CreateRow();
+        candle.AppendRow(row);
+      }
+    }
+  }
+
   public static async Task DownloadAll() {
     var symbols = await Symbol.List();
 
-    foreach (var symbol in symbols) {
-      foreach (var interval in intervals) {
-        try {
-          MyLogger.Logger.LogInformation("Start downloading {symbol} {interval} candles", symbol.name, interval);
-
-          await DownloadCandles(symbol.id, interval, null);
-        } catch (Exception ex) {
-          MyLogger.Logger.LogError(ex, "Error downloading {symbol.name} {interval}", symbol.name, interval);
-        }
-      }
-    }
-
-    MyLogger.Logger.LogInformation("Download complete");
-  }
-
-  public static async Task UpdateAll() {
-    var tracer = MyTracer.Tracer;
-    using var datasetSpan = tracer.StartActiveSpan("Downloader.GetDataset");
-    var datasets = await Dataset.List();
-    datasetSpan.End();
-
-    using var span = tracer.StartActiveSpan("Downloader.DownloadCandles");
-    await Parallel.ForEachAsync(datasets, new ParallelOptions { MaxDegreeOfParallelism = 1 }, async (dataset, t) => {
+    using var span = MyTracer.Tracer.StartActiveSpan("Downloader.DownloadCandles");
+    await Parallel.ForEachAsync(symbols, new ParallelOptions { MaxDegreeOfParallelism = 128 }, async (symbol, t) => {
       var attributes = new OpenTelemetry.Trace.SpanAttributes(new Dictionary<string, object?> {
-        { "symbolId", dataset.symbolId },
-        { "interval", dataset.interval },
-        { "end", dataset.end }
+        { "symbolId", symbol.id },
+        { "symbolName", symbol.name },
       });
-      using var ev = span.AddEvent("DownloadCandles", default, attributes);
-      await DownloadCandles(dataset.symbolId, (KlineInterval)dataset.interval, dataset.end);
+      using var ev = span.AddEvent("DownloadSymbol", default, attributes);
+
+      await DownloadSymbol(symbol.name, symbols, t);
       ev.End();
     });
+
     span.End();
   }
 
-  static async Task DownloadCandles(int symbolId, KlineInterval interval, DateTime? start) {
-    var symbol = await Symbol.Get(symbolId);
-    if (symbol == null) {
-      MyLogger.Logger.LogError("Symbol {symbolId} not found", symbolId);
-      return;
+  private static async Task DownloadSymbol(string symbol, Symbol[] symbols, CancellationToken t) {
+    MyLogger.Logger.LogInformation("Start downloading {symbol}", symbol);
+
+    var intervals = await GetKlineIntervals(symbol);
+    using var db = Database.CreateCandleDatabase(symbol);
+    using (var command = db.CreateCommand()) {
+      command.CommandText = @"CREATE TABLE IF NOT EXISTS candle (
+        market INT,
+        symbolId INT,
+        interval INT,
+        ts TIMESTAMP,
+        open DOUBLE,
+        high DOUBLE,
+        low DOUBLE,
+        close DOUBLE,
+        volume DOUBLE,
+        PRIMARY KEY (interval, ts)
+      )";
+      await command.ExecuteNonQueryAsync(t);
     }
-    var symbolName = symbol.Value.name;
 
-    using var db = Database.CreateCandleDatabase(symbol.Value.name);
-    var origStart = start;
+    foreach (var interval in intervals) {
+      var archives = (await GetKlineArchives(symbol, interval)).OrderBy(x => x.day).ToArray();
+      MyLogger.Logger.LogInformation("Downloading {symbol} {interval}", symbol, interval);
 
-    void Insert(Market market, int symbolId, KlineInterval interval, IEnumerable<Binance.Net.Interfaces.IBinanceKline> candles) {
-      try {
-        using var appender = db.CreateAppender(Candle.TableName);
-        foreach (var kline in candles) {
-            var candle = Candle.From(market, symbolId, interval, kline);
-            var row = appender.CreateRow();
-            candle.AppendRow(row);
+      foreach (var archive in archives) {
+        try {
+          var exist = await Candle.GetFirstBetween(db, interval, archive.day, archive.day.AddDays(1));
+          if (exist.HasValue) {
+            continue;
+          }
+
+          // MyLogger.Logger.LogInformation("Start downloading {symbol} {interval} {day} {archive}", symbol, interval, archive.day, archive);
+          await DownloadArchive(db, archive, symbols, t);
+        } catch (Exception ex) {
+          MyLogger.Logger.LogError(ex, "Error downloading {symbol} {interval} {archive}", symbol, interval, archive);
         }
-      } catch (Exception ex) {
-        MyLogger.Logger.LogError(ex, "Error inserting {symbolId}({symbolName}) {interval} candle", symbolId, symbolName, interval);
       }
-    }
-
-    async Task<DateTime?> GetStart() {
-      if (start.HasValue) {
-        var candles = await Exchanger.API.ExchangeData.GetKlinesAsync(symbolName, interval, start, null, 2);
-        if (candles.Data == null || candles.Data.Count() <= 1) {
-          return null;
-        }
-        return candles.Data.Skip(1).First().OpenTime;
-      } else {
-        return DateTime.Parse("2000-01-01 00:00:00");
-      }
-    }
-
-    start = await GetStart();
-    MyLogger.Logger.LogInformation("Start downloading {symbol} {interval}: {origStart} => {start}", symbol, interval, origStart, start);
-    if (!start.HasValue) {
-      return;
-    }
-
-    var chunks = Exchanger.GetKlineChunksAsync(symbolName, interval, start);
-    await foreach (var chunk in chunks) {
-      Insert(Market.futures, symbolId, interval, chunk);
-    }
-
-    var dataset = await Dataset.GetFrom(db, interval);
-    try {
-      await Dataset.Upsert(dataset);
-    } catch (Exception ex) {
-      MyLogger.Logger.LogError(ex, "Error upserting {symbolId}({symbolName}) {interval} dataset: {dataset}", symbolId, symbolName, interval, dataset);
     }
   }
 }

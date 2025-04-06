@@ -1,7 +1,9 @@
 using System.IO.Compression;
 using System.Text.Json;
+using System.Xml;
 using Binance.Net;
 using Binance.Net.Clients;
+using Binance.Net.Enums;
 using Retsuko;
 using Retsuko.Core;
 using Retsuko.Core.Indicators;

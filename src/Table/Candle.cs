@@ -148,4 +148,20 @@ public record struct Candle(
 
     return candles;
   }
+
+  public static async Task<Candle?> GetFirstBetween(DuckDBConnection db, KlineInterval interval, DateTime start, DateTime end) {
+    using var command = db.CreateCommand();
+
+    command.CommandText = $"SELECT * FROM candle WHERE interval = $interval AND ts >= $start AND ts < $end ORDER BY ts ASC LIMIT 1";
+    command.Parameters.Add(new DuckDBParameter("interval", (int)interval));
+    command.Parameters.Add(new DuckDBParameter("start", start));
+    command.Parameters.Add(new DuckDBParameter("end", end));
+
+    var reader = await command.ExecuteReaderAsync();
+    if (reader.Read()) {
+      return From(Market.futures, -1, interval, reader);
+    } else {
+      return null;
+    }
+  }
 }
