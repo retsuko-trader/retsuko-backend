@@ -21,11 +21,17 @@ public static class LiveOrderTracker {
       while (true) {
         MyLogger.Logger.LogInformation("Start updating order {orderId}", curr.orderId);
         var orderResp = await client.UsdFuturesApi.Trading.GetOrderAsync(curr.symbol, curr.orderId);
+        if (orderResp?.Data != null) {
+          curr.status = orderResp.Data.Status;
+          curr.quantityFilled = (double)orderResp.Data.QuantityFilled;
+          curr.updateTime = orderResp.Data.UpdateTime;
+        }
         EventDispatcher.Event(new LiveBrokerOrderUpdateEvent(
           rootOrder: order,
           order: curr,
           orderResp
         ));
+
         if (orderResp.Error != null) {
           // insufficient balance
           if (orderResp.Error.Code == -2018) {
@@ -38,10 +44,6 @@ public static class LiveOrderTracker {
           MyLogger.Logger.LogError("Error while tracking order {orderId}: {Error}", curr.orderId, orderResp.Error);
           return;
         }
-
-        curr.status = orderResp.Data.Status;
-        curr.quantityFilled = (double)orderResp.Data.QuantityFilled;
-        curr.updateTime = orderResp.Data.UpdateTime;
 
         if (orderResp.Data.Status == Binance.Net.Enums.OrderStatus.Filled) {
           MyLogger.Logger.LogInformation("Order {orderId} filled", curr.orderId);
