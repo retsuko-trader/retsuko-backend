@@ -18,7 +18,7 @@ public record struct LiveTraderTrade(
   public static string TableName => "live_trader_trade";
 
   public static async Task<IReadOnlyList<LiveTraderTrade>> List(string traderId) {
-    using var command = Database.PaperTrader.CreateCommand();
+    using var command = Database.LiveTrader.CreateCommand();
     command.CommandText = $"SELECT * FROM {TableName} WHERE trader_id = $traderID ORDER BY ts ASC";
     command.Parameters.Add(new DuckDBParameter("traderId", traderId));
 
@@ -30,7 +30,7 @@ public record struct LiveTraderTrade(
         reader.GetString(0),
         reader.GetString(1),
         reader.GetDateTime(2),
-        (SignalKind)reader.GetInt32(3),
+        Enum.Parse<SignalKind>(reader.GetString(3)),
         reader.GetDouble(4),
         reader.IsDBNull(5) ? null : reader.GetInt64(5),
         reader.GetDouble(6),
