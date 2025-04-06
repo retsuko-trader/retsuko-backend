@@ -4,10 +4,14 @@ using Binance.Net.Clients;
 using Binance.Net.Enums;
 using Binance.Net.Interfaces.Clients.UsdFuturesApi;
 using Binance.Net.Objects.Models.Futures;
+using Retsuko.Core.Events;
+using Retsuko.Plugins;
 
 namespace Retsuko.Core;
 
 public class LiveBroker: IBroker, ISerializable {
+  public LiveTrader trader;
+
   private LiveBrokerConfig config;
 
   public BinanceRestClient client { get; private set; }
@@ -95,6 +99,18 @@ public class LiveBroker: IBroker, ISerializable {
         positionSide: PositionSide.Short
       );
     }
+
+    EventDispatcher.Event(new LiveBrokerGotSignalEvent(
+      trader,
+      this,
+      candle.ts,
+      symbol.Value,
+      signal,
+      assetInfo,
+      currencyInfo,
+      position,
+      order
+    ));
 
     if (order == null) {
       MyLogger.Logger.LogError("Order is null");

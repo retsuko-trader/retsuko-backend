@@ -10,6 +10,8 @@ await Migrations.CreateLiveTrader();
 const string SERVICE_NAME = "retsuko-backend";
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 const string OTE_URL = "http://localhost:4317";
 
@@ -46,6 +48,7 @@ builder.Services.AddMvc()
   });
 
 var app = builder.Build();
+app.UseExceptionHandler();
 
 MyLogger.Logger = app.Logger;
 

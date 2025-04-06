@@ -5,15 +5,17 @@ namespace Retsuko.Core;
 public class LiveTrader: Trader, ISerializable<LiveTraderState> {
   public string Id => state.id;
 
-  private readonly LiveTraderConfig config;
+  public readonly LiveTraderConfig config;
 
-  private LiveTraderState state;
+  public LiveTraderState state;
 
   private LiveTrader(LiveTraderConfig config, string id): base(
     StrategyLoader.CreateStrategy(config.strategy.name, config.strategy.config)!,
     new LiveBroker(config.broker)
   ) {
     this.config = config;
+
+    (broker as LiveBroker)!.trader = this;
 
     state = new LiveTraderState(
       id: id,
