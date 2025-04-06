@@ -106,6 +106,7 @@ public class LiveBroker: IBroker, ISerializable {
       candle.ts,
       symbol.Value,
       signal,
+      account.Data,
       assetInfo,
       currencyInfo,
       position,

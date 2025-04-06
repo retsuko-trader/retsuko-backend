@@ -1,4 +1,6 @@
 using Binance.Net.Clients;
+using Retsuko.Core.Events;
+using Retsuko.Plugins;
 
 namespace Retsuko.Core;
 
@@ -28,6 +30,12 @@ public static class LiveOrderTracker {
             return;
           }
 
+          EventDispatcher.Event(new LiveBrokerOrderUpdateEvent(
+            rootOrder: order,
+            order: curr,
+            orderResp
+          ));
+
           MyLogger.Logger.LogError("Error while tracking order {orderId}: {Error}", curr.orderId, orderResp.Error);
           return;
         }
@@ -40,6 +48,11 @@ public static class LiveOrderTracker {
           MyLogger.Logger.LogInformation("Order {orderId} filled", curr.orderId);
           curr.closedAt = orderResp.Data.UpdateTime;
           await curr.Update();
+
+          EventDispatcher.Event(new LiveBrokerOrderFilledEvent(
+            order,
+            orderResp.Data
+          ));
           break;
         }
 
