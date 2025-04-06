@@ -55,5 +55,7 @@ MyLogger.Logger = app.Logger;
 var strategies = string.Join(',', StrategyLoader.strategies.Select(x => x.Name));
 MyLogger.Logger.LogInformation("Available strategies: {strategies}", strategies);
 
+await Retsuko.Plugins.Discord.Initialize();
+
 app.MapControllerRoute("default", "{controller=Home}/{action=Index}/{id?}");
 app.Run();

@@ -6,10 +6,6 @@ public static class EventDispatcher {
   public static event Action<LiveBrokerEvent> OnLiveBrokerEvent;
   public static event Action<HttpContext?, Exception> OnException;
 
-  static EventDispatcher() {
-    Discord.Initialize();
-  }
-
   public static void Event<T>(T eve) {
     if (eve is LiveBrokerEvent lbe) {
       OnLiveBrokerEvent?.Invoke(lbe);

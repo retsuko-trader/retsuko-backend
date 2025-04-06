@@ -21,6 +21,11 @@ public static class LiveOrderTracker {
       while (true) {
         MyLogger.Logger.LogInformation("Start updating order {orderId}", curr.orderId);
         var orderResp = await client.UsdFuturesApi.Trading.GetOrderAsync(curr.symbol, curr.orderId);
+        EventDispatcher.Event(new LiveBrokerOrderUpdateEvent(
+          rootOrder: order,
+          order: curr,
+          orderResp
+        ));
         if (orderResp.Error != null) {
           // insufficient balance
           if (orderResp.Error.Code == -2018) {
@@ -29,12 +34,6 @@ public static class LiveOrderTracker {
             await curr.Update();
             return;
           }
-
-          EventDispatcher.Event(new LiveBrokerOrderUpdateEvent(
-            rootOrder: order,
-            order: curr,
-            orderResp
-          ));
 
           MyLogger.Logger.LogError("Error while tracking order {orderId}: {Error}", curr.orderId, orderResp.Error);
           return;

@@ -1,16 +1,30 @@
 using Discord;
 using Discord.Webhook;
+using Discord.WebSocket;
 using Retsuko.Core.Events;
 
 namespace Retsuko.Plugins;
 
 public static class Discord {
-  static string webhookUrl = Environment.GetEnvironmentVariable("DISCORD_WEBHOOK_URL") ?? "";
-  static DiscordWebhookClient webhook = new(webhookUrl);
+  static DiscordSocketClient client;
+  static SocketTextChannel channel;
 
-  static Dictionary<long, ulong> orderThreadIds = new();
+  static Dictionary<long, SocketTextChannel> orderThreads = new();
 
-  public static void Initialize() {
+  public static async Task Initialize() {
+    client = new DiscordSocketClient();
+    await client.LoginAsync(TokenType.Bot, Environment.GetEnvironmentVariable("DISCORD_BOT_TOKEN"));
+    await client.StartAsync();
+
+    client.Ready += async () => {
+      await ValueTask.CompletedTask;
+
+      var guild = client.GetGuild(ulong.Parse(Environment.GetEnvironmentVariable("DISCORD_GUILD_ID")!));
+      channel = guild.GetTextChannel(ulong.Parse(Environment.GetEnvironmentVariable("DISCORD_CHANNEL_ID")!));
+    };
+
+    MyLogger.Logger.LogInformation("Discord bot started");
+
     EventDispatcher.OnLiveBrokerEvent += OnLiveBrokerEvent;
     EventDispatcher.OnException += OnException;
   }
@@ -70,7 +84,7 @@ public static class Discord {
     };
 
     if (e.order == null) {
-      await webhook.SendMessageAsync(
+      await channel.SendMessageAsync(
         text: "LiveBroker order failed",
         embeds: [
           new EmbedBuilder()
@@ -85,7 +99,7 @@ public static class Discord {
     }
 
     if (e.order.Error != null) {
-      await webhook.SendMessageAsync(
+      await channel.SendMessageAsync(
         text: "LiveBroker order error",
         embeds: [
           new EmbedBuilder()
@@ -118,7 +132,7 @@ public static class Discord {
         .WithIsInline(true)
     );
 
-    var threadId = await webhook.SendMessageAsync(
+    var message = await channel.SendMessageAsync(
       text: "LiveBroker order created",
       embeds: [
         new EmbedBuilder()
@@ -129,14 +143,20 @@ public static class Discord {
           .Build()
       ]
     );
-    orderThreadIds[e.order.Data.Id] = threadId;
+    var thread = await channel.CreateThreadAsync($"order {e.order.Data.Id}", message: message);
+    if (thread == null) {
+      MyLogger.Logger.LogError("Failed to create thread for order {orderId}", e.order.Data.Id);
+      return;
+    }
+
+    orderThreads[e.order.Data.Id] = thread;
   }
 
   static async Task OnLiveBrokerOrderUpdateEvent(LiveBrokerOrderUpdateEvent e) {
-    var threadId = (ulong?)null;
-    var threadFound = orderThreadIds.TryGetValue(e.rootOrder.orderId, out var threadId0);
+    SocketTextChannel target = channel;
+    var threadFound = orderThreads.TryGetValue(e.rootOrder.orderId, out var thread);
     if (threadFound) {
-      threadId = threadId0;
+      target = thread!;
     }
 
     if (!threadFound) {
@@ -163,9 +183,8 @@ public static class Discord {
     };
 
     if (e.orderResp == null) {
-      await webhook.SendMessageAsync(
+      await Retry(async () => await target.SendMessageAsync(
         text: "LiveBroker order update failed",
-        threadId: threadId,
         embeds: [
           new EmbedBuilder()
             .WithTitle("LiveBroker order update failed")
@@ -174,14 +193,13 @@ public static class Discord {
             .WithFields(fields)
             .Build()
         ]
-      );
+      ));
       return;
     }
 
     if (e.orderResp.Error != null) {
-      await webhook.SendMessageAsync(
+      await Retry(async () => await target.SendMessageAsync(
         text: "LiveBroker order update error",
-        threadId: threadId,
         embeds: [
           new EmbedBuilder()
             .WithTitle("LiveBroker order update error")
@@ -190,12 +208,11 @@ public static class Discord {
             .WithFields(fields)
             .Build()
         ]
-      );
+      ));
       return;
     }
-    await webhook.SendMessageAsync(
+    await Retry(async () => await target.SendMessageAsync(
       text: threadFound ? "LiveBroker order updated" : "Missing thread for LiveBroker order update; creating new thread",
-      threadId: threadId,
       embeds: [
         new EmbedBuilder()
           .WithTitle($"LiveBroker order updated")
@@ -204,14 +221,14 @@ public static class Discord {
           .WithFields(fields)
           .Build()
       ]
-    );
+    ));
   }
 
   static async Task OnLiveBrokerOrderFilledEvent(LiveBrokerOrderFilledEvent e) {
-    var threadId = (ulong?)null;
-    var threadFound = orderThreadIds.TryGetValue(e.rootOrder.orderId, out var threadId0);
+    SocketTextChannel target = channel;
+    var threadFound = orderThreads.TryGetValue(e.rootOrder.orderId, out var thread);
     if (threadFound) {
-      threadId = threadId0;
+      target = thread!;
     }
 
     if (!threadFound) {
@@ -237,9 +254,8 @@ public static class Discord {
         .WithIsInline(true),
     };
 
-    await webhook.SendMessageAsync(
+    await Retry(async () => await target.SendMessageAsync(
       text: threadFound ? "LiveBroker order filled" : "Missing thread for LiveBroker order filled; creating new thread",
-      threadId: threadId,
       embeds: [
         new EmbedBuilder()
           .WithTitle($"LiveBroker order filled")
@@ -248,7 +264,7 @@ public static class Discord {
           .WithFields(fields)
           .Build()
       ]
-    );
+    ));
   }
 
   static async void OnException(HttpContext? context, Exception e) {
@@ -258,9 +274,22 @@ public static class Discord {
       .WithColor(0xFF0000)
       .Build();
 
-    await webhook.SendMessageAsync(
+    await channel.SendMessageAsync(
       text: "Unhandled Exception",
       embeds: [embed]
     );
+  }
+
+  static async Task Retry(Func<Task> task, int maxRetries = 3, int delay = 1000) {
+    for (int i = 0; i < maxRetries; i++) {
+      try {
+        await task();
+        return;
+      } catch (Exception e) {
+        MyLogger.Logger.LogError(e, "Retrying task {i}/{maxRetries}", i + 1, maxRetries);
+        await Task.Delay(delay);
+      }
+    }
+    MyLogger.Logger.LogError("Max retries reached for task");
   }
 }
