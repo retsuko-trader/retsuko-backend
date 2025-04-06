@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.IO.Compression;
 using System.Web;
 using System.Xml;
@@ -121,6 +122,8 @@ public static class Downloader {
     using var zs = await resp.Content.ReadAsStreamAsync(t);
     using var zip = new ZipArchive(zs);
 
+    var symbol = symbols.First(x => x.name == archive.symbol);
+
     using var appender = db.CreateAppender(Candle.TableName);
     foreach (var entry in zip.Entries) {
       using var fs = entry.Open();
@@ -144,8 +147,6 @@ public static class Downloader {
         var takerBuyVolume = double.Parse(parts[9]);
         var takerBuyQuoteVolume = double.Parse(parts[10]);
 
-        var symbol = symbols.First(x => x.name == archive.symbol);
-
         var candle = new Candle(
           market: Market.futures,
           symbolId: symbol.id,
@@ -167,21 +168,27 @@ public static class Downloader {
     var symbols = await Symbol.List();
 
     using var span = MyTracer.Tracer.StartActiveSpan("Downloader.DownloadCandles");
-    await Parallel.ForEachAsync(symbols, new ParallelOptions { MaxDegreeOfParallelism = 128 }, async (symbol, t) => {
+    var datasetChanges = new ConcurrentBag<Dataset>();
+
+    await Parallel.ForEachAsync(symbols, new ParallelOptions { MaxDegreeOfParallelism = 64 }, async (symbol, t) => {
       var attributes = new OpenTelemetry.Trace.SpanAttributes(new Dictionary<string, object?> {
         { "symbolId", symbol.id },
         { "symbolName", symbol.name },
       });
       using var ev = span.AddEvent("DownloadSymbol", default, attributes);
 
-      await DownloadSymbol(symbol.name, symbols, t);
+      await DownloadSymbol(symbol.name, symbols, datasetChanges, t);
       ev.End();
     });
+
+    foreach (var dataset in datasetChanges) {
+      await Dataset.Upsert(dataset);
+    }
 
     span.End();
   }
 
-  private static async Task DownloadSymbol(string symbol, Symbol[] symbols, CancellationToken t) {
+  private static async Task DownloadSymbol(string symbol, Symbol[] symbols, ConcurrentBag<Dataset> datasets, CancellationToken t) {
     MyLogger.Logger.LogInformation("Start downloading {symbol}", symbol);
 
     var intervals = await GetKlineIntervals(symbol);
@@ -206,8 +213,14 @@ public static class Downloader {
       var archives = (await GetKlineArchives(symbol, interval)).OrderBy(x => x.day).ToArray();
       MyLogger.Logger.LogInformation("Downloading {symbol} {interval}", symbol, interval);
 
+      var dataset = await Dataset.GetFrom(db, interval);
+
       foreach (var archive in archives) {
         try {
+          if (dataset.end > archive.day) {
+            continue;
+          }
+
           var exist = await Candle.GetFirstBetween(db, interval, archive.day, archive.day.AddDays(1));
           if (exist.HasValue) {
             continue;
@@ -219,6 +232,9 @@ public static class Downloader {
           MyLogger.Logger.LogError(ex, "Error downloading {symbol} {interval} {archive}", symbol, interval, archive);
         }
       }
+
+      dataset = await Dataset.GetFrom(db, interval);
+      datasets.Add(dataset);
     }
   }
 }
