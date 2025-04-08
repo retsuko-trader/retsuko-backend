@@ -60,9 +60,12 @@ public class BacktestController: Controller {
 
     ExtBacktestRun? extRun = run.HasValue ? new ExtBacktestRun(run.Value) : null;
 
+    var singleIds = singles.Select(x => x.id).ToArray();
+    var allTrades = await BacktestTrade.List(singleIds);
+
     return Ok(new {
       run = extRun,
-      singles = singles.Select(x => new ExtBacktestSingle(x)),
+      singles = singles.Select(x => new ExtBacktestSingle(x, allTrades.Where(t => t.single_id == x.id).ToArray())),
     });
   }
 

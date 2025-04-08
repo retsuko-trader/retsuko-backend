@@ -93,9 +93,16 @@ public abstract class Trader {
       metrics.maxBalance = balance;
       metrics.maxBalanceTs = candle.ts;
     }
-    metrics.marketChange = (lastCandle.Value.close - firstCandle.Value.close) / firstCandle.Value.close;
+
+    if (firstCandle.Value.close != 0) {
+      metrics.marketChange = (lastCandle.Value.close - firstCandle.Value.close) / firstCandle.Value.close;
+    }
 
     var startBalance = broker.InitialBalance;
+
+    if (startBalance == 0) {
+      startBalance = 1;
+    }
     var profit = (balance - startBalance) / startBalance;
     metrics.totalProfit = profit;
 
@@ -108,9 +115,11 @@ public abstract class Trader {
       metrics.drawdownEndTs = candle.ts;
     }
 
-    var helper = new MetricsHelper(startBalance, ref portfolio, ref metrics, firstCandle.Value, lastCandle.Value);
+    var helper = new MetricsHelper(startBalance, ref portfolio, ref metrics, ref trades, firstCandle.Value, lastCandle.Value);
     metrics.cagr = helper.cagr();
     metrics.avgTrades = helper.avgTrades();
+    metrics.sortino = helper.sortino();
+    metrics.sharpe = helper.sharpe();
 
     metrics.endBalance = portfolio.totalBalance;
   }

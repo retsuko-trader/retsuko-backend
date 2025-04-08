@@ -129,10 +129,12 @@ public static class Downloader {
       using var fs = entry.Open();
       using var sr = new StreamReader(fs);
 
-      await sr.ReadLineAsync(t);
-
       while (!sr.EndOfStream) {
         var line = await sr.ReadLineAsync(t);
+        if (line.StartsWith("open")) {
+          continue;
+        }
+
         var parts = line!.Split(',');
 
         var openTime = DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(parts[0]));

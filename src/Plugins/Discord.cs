@@ -268,16 +268,18 @@ public static class Discord {
   }
 
   static async void OnException(HttpContext? context, Exception e) {
-    var embed = new EmbedBuilder()
-      .WithTitle(e.Message)
-      .WithDescription(e.ToString())
-      .WithColor(0xFF0000)
-      .Build();
+    try {
+      var embed = new EmbedBuilder()
+        .WithTitle(e.Message.Substring(0, 255))
+        .WithDescription(e.ToString())
+        .WithColor(0xFF0000)
+        .Build();
 
-    await channel.SendMessageAsync(
-      text: "Unhandled Exception",
-      embeds: [embed]
-    );
+      await channel.SendMessageAsync(
+        text: "Unhandled Exception",
+        embeds: [embed]
+      );
+    } catch {}
   }
 
   static async Task Retry(Func<Task> task, int maxRetries = 3, int delay = 1000) {

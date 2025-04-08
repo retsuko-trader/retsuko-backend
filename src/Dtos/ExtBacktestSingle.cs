@@ -10,8 +10,9 @@ public record struct ExtBacktestSingle {
   public DateTime dataset_end { get; init; }
   public BacktestConfig config { get; init; }
   public TraderMetrics metrics { get; init; }
+  public BacktestTrade[] trades { get; init; }
 
-  public ExtBacktestSingle(BacktestSingle single) {
+  public ExtBacktestSingle(BacktestSingle single, BacktestTrade[] trades) {
     id = single.id;
     run_id = single.run_id;
     dataset_start = single.dataset_start;
@@ -22,5 +23,6 @@ public record struct ExtBacktestSingle {
       JsonSerializer.Deserialize<PaperBrokerConfig>(single.broker_config)
     );
     metrics = JsonSerializer.Deserialize<TraderMetrics>(single.metrics);
+    this.trades = trades;
   }
 }

@@ -258,7 +258,7 @@ public static class Debugger {
   public static async Task TestDownloader() {
     // list: s3 api
     // https://s3-ap-northeast-1.amazonaws.com/data.binance.vision?delimiter=/&prefix=data/futures/um/daily/klines/
-    var url = "https://data.binance.vision/data/futures/um/daily/klines/BTCUSDT/1m/BTCUSDT-1m-2025-04-02.zip";
+    var url = "https://data.binance.vision/data/futures/um/daily/klines/BTCUSDT/8h/BTCUSDT-8h-2025-04-05.zip";
 
     using var client = new HttpClient();
     using var resp = await client.GetAsync(url);
@@ -269,7 +269,6 @@ public static class Debugger {
     foreach (var entry in zip.Entries) {
       using var fs = entry.Open();
       using var sr = new StreamReader(fs);
-
 
       await sr.ReadLineAsync();
 
