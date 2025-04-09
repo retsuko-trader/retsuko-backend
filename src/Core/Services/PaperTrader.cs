@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Retsuko.Plugins;
 
 namespace Retsuko.Core;
 
@@ -56,7 +57,12 @@ public class PaperTrader: Trader, ISerializable<PaperTraderState> {
     state.updatedAt = DateTime.Now;
     state.strategy_state = strategy.Serialize();
     state.broker_state = broker.Serialize();
-    state.metrics = JsonSerializer.Serialize(metrics);
+    try {
+      state.metrics = JsonSerializer.Serialize(metrics);
+    } catch (Exception ex) {
+      MyLogger.Logger.LogError(ex, "Failed to serialize metrics");
+      EventDispatcher.Exception(null, ex);
+    }
     state.states = JsonSerializer.Serialize(new InnerState(firstCandle, lastCandle));
     return trade;
   }

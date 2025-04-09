@@ -69,7 +69,13 @@ public class LiveTrader: Trader, ISerializable<LiveTraderState> {
     state.updatedAt = DateTime.Now;
     state.strategy_state = strategy.Serialize();
     state.broker_state = broker.Serialize();
-    state.metrics = JsonSerializer.Serialize(metrics);
+
+    try {
+      state.metrics = JsonSerializer.Serialize(metrics);
+    } catch (Exception ex) {
+      MyLogger.Logger.LogError(ex, "Failed to serializing metrics");
+    }
+
     state.states = JsonSerializer.Serialize(new InnerState(firstCandle, lastCandle));
 
     return trade;

@@ -29,6 +29,10 @@ public ref struct MetricsHelper {
   }
 
   public double sortino() {
+    if (trades.Count == 0) {
+      return 0;
+    }
+
     var profit = metrics.totalProfit;
     var expectedReturn = profit / days;
 
@@ -45,6 +49,10 @@ public ref struct MetricsHelper {
   }
 
   public double sharpe() {
+    if (trades.Count == 0) {
+      return 0;
+    }
+
     var profit = metrics.totalProfit;
     var expectedReturn = profit / days;
 
