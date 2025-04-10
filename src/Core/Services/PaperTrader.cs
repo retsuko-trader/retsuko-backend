@@ -37,6 +37,17 @@ public class PaperTrader: Trader, ISerializable<PaperTraderState> {
   public override async Task<Trade?> Tick(Candle candle) {
     var trade = await base.Tick(candle);
 
+    var delay = DateTime.Now - candle.ts;
+    var delayed = delay > TimeSpan.FromHours(1);
+    if (delayed)  {
+      MyLogger.Logger.LogWarning(
+        "PaperTrader {traderId} tick delayed {delay} for candle {candle}",
+        Id,
+        delay,
+        candle
+      );
+    }
+
     if (trade.HasValue) {
       var id = new Visus.Cuid.Cuid2().ToString();
 
