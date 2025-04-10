@@ -28,3 +28,9 @@ public record LiveBrokerOrderFilledEvent(
   LiveTraderOrder rootOrder,
   BinanceUsdFuturesOrder order
 ): LiveBrokerEvent;
+
+public record LiveBrokerOrderDelayedEvent(
+  LiveTrader trader,
+  Candle candle,
+  Signal signal
+): LiveBrokerEvent;

@@ -36,6 +36,8 @@ public static class Discord {
       await OnLiveBrokerOrderUpdateEvent(orderUpdateEvent);
     } else if (e is LiveBrokerOrderFilledEvent orderFilledEvent) {
       await OnLiveBrokerOrderFilledEvent(orderFilledEvent);
+    } else if (e is LiveBrokerOrderDelayedEvent orderDelayedEvent) {
+      await OnLiveBrokerOrderDelayedEvent(orderDelayedEvent);
     }
   }
 
@@ -262,6 +264,25 @@ public static class Discord {
           .WithDescription($"")
           .WithColor(0x00FF00)
           .WithFields(fields)
+          .Build()
+      ]
+    ));
+  }
+
+  static async Task OnLiveBrokerOrderDelayedEvent(LiveBrokerOrderDelayedEvent e) {
+    var description = @$"Order delayed for {e.trader.Id} on {e.candle.symbolId}
+trader: {e.trader.config.info.name} for {e.trader.config.dataset.symbolId}-{e.trader.config.dataset.interval.ToIntervalString()}
+signal: {e.signal.kind}:{e.signal.confidence}
+candle: {e.candle.ts}
+delay: {(DateTime.Now - e.candle.ts).TotalHours} hours";
+
+    await Retry(async () => await channel.SendMessageAsync(
+      text: "LiveBroker order delayed",
+      embeds: [
+        new EmbedBuilder()
+          .WithTitle("LiveBroker order delayed")
+          .WithDescription(description)
+          .WithColor(0xFF0000)
           .Build()
       ]
     ));

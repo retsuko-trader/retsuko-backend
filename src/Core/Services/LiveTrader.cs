@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Retsuko.Core.Events;
 using Retsuko.Plugins;
 
 namespace Retsuko.Core;
@@ -37,7 +38,59 @@ public class LiveTrader: Trader, ISerializable<LiveTraderState> {
   }
 
   public override async Task<Trade?> Tick(Candle candle) {
-    var trade = await base.Tick(candle);
+    if (!firstCandle.HasValue) {
+      firstCandle = candle;
+    }
+
+    var delay = DateTime.Now - candle.ts;
+    var delayed = delay > TimeSpan.FromHours(1);
+    if (delayed)  {
+      MyLogger.Logger.LogWarning(
+        "LiveTrader {traderId} tick delayed {delay} for candle {candle}",
+        Id,
+        delay,
+        candle
+      );
+    }
+
+    Trade? trade = null;
+
+    var signal = await strategy.Update(candle);
+    if (signal != null) {
+      if (!delayed) {
+        trade = await broker.HandleAdvice(candle, signal);
+      } else {
+        MyLogger.Logger.LogError(
+          "LiveTrader {traderId} got signal {signal} but delayed {delay} for candle {candle}",
+          Id,
+          signal,
+          delay,
+          candle
+        );
+
+        EventDispatcher.Event(new LiveBrokerOrderDelayedEvent(this, candle, signal));
+      }
+      if (trade.HasValue) {
+        if (trades.Count > 0) {
+          var lastTrade = trades[^1];
+
+          if (lastTrade.signal == SignalKind.openLong || lastTrade.signal == SignalKind.openShort) {
+            var currBalance = trade.Value.TotalBalance;
+            var prevBalance = lastTrade.TotalBalance;
+            var profit = (currBalance - prevBalance) / prevBalance;
+
+            lastTrade.profit = profit;
+            trades[^1] = lastTrade;
+          }
+        }
+
+        trades.Add(trade.Value);
+      }
+
+      ProcessMetrics(candle, trade);
+    }
+
+    lastCandle = candle;
 
     if (trade.HasValue) {
       var id = new Visus.Cuid.Cuid2().ToString();
