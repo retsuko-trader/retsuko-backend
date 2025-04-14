@@ -11,6 +11,7 @@ public record struct ExtPaperTraderState {
   public DateTime? endedAt { get; init; }
   public PapertraderConfig config { get; init; }
   public TraderMetrics metrics { get; init; }
+  public string dump { get; init; }
 
   public ExtPaperTraderState(PaperTraderState state) {
     id = state.id;
@@ -21,5 +22,6 @@ public record struct ExtPaperTraderState {
     endedAt = state.endedAt;
     config = state.Config;
     metrics = state.Metrics;
+    dump = state.strategy_state;
   }
 }

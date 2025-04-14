@@ -24,7 +24,7 @@ public class BacktestCandleLoader: ICandleLoader, IDisposable {
       return false;
     }
 
-    db = Database.CreateCandleDatabase(symbol.Value.name, true);
+    db = Database.CreateCandleDatabase(symbol.Value.name);
 
     using var command = db.CreateCommand();
     command.UseStreamingMode = true;

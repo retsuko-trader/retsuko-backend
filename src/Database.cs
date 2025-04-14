@@ -13,6 +13,8 @@ public class Database {
     var connectionString = $"Data Source={filename};";
     if (readOnly) {
       connectionString += "ACCESS_MODE=READ_ONLY";
+    } else {
+      connectionString += "ACCESS_MODE=READ_WRITE";
     }
     var connection = new DuckDBConnection(connectionString);
     connection.Open();

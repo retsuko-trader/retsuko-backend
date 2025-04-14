@@ -94,7 +94,7 @@ public record struct Candle(
   }
 
   public static async Task<List<Dataset>> GetDataset(string symbol) {
-    using var db = Database.CreateCandleDatabase(symbol, true);
+    using var db = Database.CreateCandleDatabase(symbol);
     using var command = db.CreateCommand();
 
     command.CommandText = "SELECT market, symbolId, interval, min(ts), max(ts), count(ts) FROM candle GROUP BY market, symbolId, interval";
@@ -121,7 +121,7 @@ public record struct Candle(
       throw new ArgumentException($"Symbol {symbolId} not found");
     }
 
-    using var db = Database.CreateCandleDatabase(symbol.Value.name, true);
+    using var db = Database.CreateCandleDatabase(symbol.Value.name);
     using var command = db.CreateCommand();
 
     command.CommandText = $"SELECT * FROM candle WHERE interval = $interval AND ts >= $start AND ts <= $end ORDER BY ts ASC";
