@@ -15,11 +15,9 @@ public abstract class Strategy<TConfig>: IStrategy, ISerializable where TConfig:
     return indicator;
   }
 
-  public virtual async Task Preload(IEnumerable<Candle> candles) {
-    foreach (var candle in candles) {
-      foreach (var indicator in indicators) {
-        indicator.Update(candle);
-      }
+  public virtual async Task Preload(Candle candle) {
+    foreach (var indicator in indicators) {
+      indicator.Update(candle);
     }
 
     await ValueTask.CompletedTask;

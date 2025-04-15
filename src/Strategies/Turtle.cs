@@ -49,6 +49,11 @@ public class TurtleStrategy: Strategy<TurtleStrategyConfig>, IStrategyCreate<Tur
     sma = AddIndicator(Indicators.SMA(config.bullPeriod));
   }
 
+  public override async Task Preload(Candle candle) {
+    await base.Preload(candle);
+    UpdateInner(candle);
+  }
+
   public override async Task<Signal?> Update(Candle candle) {
     await base.Update(candle);
 

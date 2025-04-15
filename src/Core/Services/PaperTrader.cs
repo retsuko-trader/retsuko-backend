@@ -34,6 +34,11 @@ public class PaperTrader: Trader, ISerializable<PaperTraderState> {
     );
   }
 
+  public override async Task Preload(ICandleLoader loader) {
+    await base.Preload(loader);
+    state.strategy_state = strategy.Serialize();
+  }
+
   public override async Task<Trade?> Tick(Candle candle) {
     var trade = await base.Tick(candle);
 

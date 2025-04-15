@@ -61,6 +61,12 @@ public class SuperTrendTurtleStrategy: Strategy<SuperTrendTurtleStrategyConfig>,
     });
   }
 
+  public override async Task Preload(Candle candle) {
+    await base.Preload(candle);
+    await superTrend.Preload(candle);
+    await turtle.Preload(candle);
+  }
+
   public override async Task<Signal?> Update(Candle candle) {
     await base.Update(candle);
 

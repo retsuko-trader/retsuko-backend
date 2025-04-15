@@ -50,11 +50,9 @@ public class SuperTrendStrategy: Strategy<SuperTrendStrategyConfig>, IStrategyCr
     stopLoss = new TrailingStopLoss(config.trailingStop);
   }
 
-  public override async Task Preload(IEnumerable<Candle> candles) {
-    await base.Preload(candles);
-    foreach (var candle in candles) {
-      UpdateInner(candle);
-    }
+  public override async Task Preload(Candle candle) {
+    await base.Preload(candle);
+    UpdateInner(candle);
   }
 
   public override async Task<Signal?> Update(Candle candle) {

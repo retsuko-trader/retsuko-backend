@@ -37,6 +37,11 @@ public class LiveTrader: Trader, ISerializable<LiveTraderState> {
     );
   }
 
+  public override async Task Preload(ICandleLoader loader) {
+    await base.Preload(loader);
+    state.strategy_state = strategy.Serialize();
+  }
+
   public override async Task<Trade?> Tick(Candle candle) {
     if (!firstCandle.HasValue) {
       firstCandle = candle;

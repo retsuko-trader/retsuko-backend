@@ -1,7 +1,7 @@
 namespace Retsuko.Core;
 
 public interface IStrategy: ISerializable {
-  Task Preload(IEnumerable<Candle> candles);
+  Task Preload(Candle candle);
 
   Task<Signal?> Update(Candle candle);
   Task<IEnumerable<DebugIndicatorInput>> Debug(Candle candle);
