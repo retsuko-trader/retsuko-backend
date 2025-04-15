@@ -10,6 +10,12 @@ using Retsuko.Plugins;
 namespace Retsuko.Core;
 
 public class LiveBroker: IBroker, ISerializable {
+  record struct Position(
+    double ts,
+    PositionKind kind,
+    double confidence
+  );
+
   public LiveTrader trader;
 
   private LiveBrokerConfig config;
@@ -18,6 +24,7 @@ public class LiveBroker: IBroker, ISerializable {
   private IBinanceRestClientUsdFuturesApi api => client.UsdFuturesApi;
 
   public double InitialBalance { get; private set; } = 1;
+  Position? position;
 
   private Portfolio portfolio;
 
@@ -56,6 +63,12 @@ public class LiveBroker: IBroker, ISerializable {
 
     // TODO: check current open orders
     if (signal.kind == SignalKind.openLong) {
+      var prevConfidence = this.position?.confidence ?? 0;
+      if (this.position?.kind == PositionKind.@long && prevConfidence >= signal.confidence) {
+        MyLogger.Logger.LogInformation($"Skip open long {signal.confidence} < {prevConfidence}");
+        return null;
+      }
+
       var expectAmount = portfolio.totalBalance * 0.95 * config.ratio * signal.confidence;
       var quantity = Math.Round(expectAmount / candle.close, filter.QuantityPrecision);
 
@@ -67,6 +80,7 @@ public class LiveBroker: IBroker, ISerializable {
         price: (decimal)candle.close,
         timeInForce: TimeInForce.GoodTillCanceled
       );
+      this.position = new Position(candle.ts.ToUnixTimestamp(), PositionKind.@long, signal.confidence);
     } else if (signal.kind == SignalKind.closeLong) {
       order = await api.Trading.PlaceOrderAsync(
         symbol: symbol.Value.name,
@@ -76,7 +90,14 @@ public class LiveBroker: IBroker, ISerializable {
         price: (decimal)candle.close,
         timeInForce: TimeInForce.GoodTillCanceled
       );
+      this.position = null;
     } else if (signal.kind == SignalKind.openShort) {
+      var prevConfidence = this.position?.confidence ?? 0;
+      if (this.position?.kind == PositionKind.@short && prevConfidence >= signal.confidence) {
+        MyLogger.Logger.LogInformation($"Skip open short {signal.confidence} < {prevConfidence}");
+        return null;
+      }
+
       var expectAmount = portfolio.totalBalance * 0.95 * config.ratio * signal.confidence;
       var quantity = Math.Round(expectAmount / candle.close, filter.QuantityPrecision);
 
@@ -88,6 +109,7 @@ public class LiveBroker: IBroker, ISerializable {
         price: (decimal)candle.close,
         timeInForce: TimeInForce.GoodTillCanceled
       );
+      this.position = new Position(candle.ts.ToUnixTimestamp(), PositionKind.@short, signal.confidence);
     } else if (signal.kind == SignalKind.closeShort) {
       order = await api.Trading.PlaceOrderAsync(
         symbol: symbol.Value.name,
@@ -98,6 +120,7 @@ public class LiveBroker: IBroker, ISerializable {
         timeInForce: TimeInForce.GoodTillCanceled,
         positionSide: PositionSide.Short
       );
+      this.position = null;
     }
 
     EventDispatcher.Event(new LiveBrokerGotSignalEvent(
@@ -132,7 +155,8 @@ public class LiveBroker: IBroker, ISerializable {
 
   record InnerState(
     LiveBrokerConfig config,
-    double initialBalance
+    double initialBalance,
+    Position? position
   );
 
   public Portfolio GetPortfolio() {
@@ -140,7 +164,7 @@ public class LiveBroker: IBroker, ISerializable {
   }
 
   public string Serialize() {
-    return JsonSerializer.Serialize<InnerState>(new (config, InitialBalance));
+    return JsonSerializer.Serialize<InnerState>(new (config, InitialBalance, position));
   }
 
   public void Deserialize(string state) {
@@ -151,5 +175,6 @@ public class LiveBroker: IBroker, ISerializable {
 
     config = x.config;
     InitialBalance = x.initialBalance;
+    position = x.position;
   }
 }
