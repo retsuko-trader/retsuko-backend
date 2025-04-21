@@ -36,13 +36,14 @@ public static class LiveOrderTracker {
           // insufficient balance
           if (orderResp.Error.Code == -2018) {
             MyLogger.Logger.LogError("Insufficient balance while tracking order {orderId}: {Error}", curr.orderId, orderResp.Error);
-            curr.cancelledAt = DateTime.Now;
+            curr.cancelledAt = DateTime.UtcNow;
             await curr.Update();
             return;
           }
 
           MyLogger.Logger.LogError("Error while tracking order {orderId}: {Error}", curr.orderId, orderResp.Error);
-          return;
+          await Task.Delay(500);
+          continue;
         }
 
         if (orderResp.Data.Status == Binance.Net.Enums.OrderStatus.Filled) {

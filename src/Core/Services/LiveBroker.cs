@@ -81,7 +81,9 @@ public class LiveBroker: IBroker, ISerializable {
         timeInForce: TimeInForce.GoodTillCanceled
       );
       this.position = new Position(candle.ts.ToUnixTimestamp(), PositionKind.@long, signal.confidence);
-    } else if (signal.kind == SignalKind.closeLong) {
+
+      // don't use short, yet
+    } else if (signal.kind == SignalKind.closeLong || signal.kind == SignalKind.openShort) {
       order = await api.Trading.PlaceOrderAsync(
         symbol: symbol.Value.name,
         side: OrderSide.Sell,
