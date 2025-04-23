@@ -8,20 +8,20 @@ public record struct AccountPortfolioAsset(
   double amount,
   double entryPrice,
   double marketPrice,
-  double value,
   double initialBalance,
+  double currentBalance,
   double profitBalance,
   double profit
 ) {
   public static AccountPortfolioAsset From(BinancePositionV3 position) {
     return new AccountPortfolioAsset(
       symbol: position.Symbol,
-      leverage: (int)(position.Leverage ?? 1),
+      leverage: (int)(position.Leverage ?? -1),
       amount: (double)position.PositionAmt,
       entryPrice: (double)position.EntryPrice,
       marketPrice: (double)position.MarkPrice,
-      value: (double)position.PositionAmt * (double)position.MarkPrice,
-      initialBalance: (double)position.InitialMargin,
+      initialBalance: (double)position.InitialMargin - (double)position.UnrealizedProfit,
+      currentBalance: (double)position.InitialMargin,
       profitBalance: (double)position.UnrealizedProfit,
       profit: (double)position.UnrealizedProfit / (double)position.InitialMargin
     );
