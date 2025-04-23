@@ -10,8 +10,8 @@ public class Exchanger {
 
   public static IBinanceRestClientUsdFuturesApi API => Client.UsdFuturesApi;
 
-  public static BinanceRestClient TestNetClient => CreateClient(true);
-  public static BinanceRestClient LiveClient => CreateClient(false);
+  public static readonly BinanceRestClient TestNetClient = CreateClient(true);
+  public static readonly BinanceRestClient LiveClient = CreateClient(false);
 
   private static BinanceRestClient CreateClient(bool isTestNet) {
     return new BinanceRestClient(options => {
