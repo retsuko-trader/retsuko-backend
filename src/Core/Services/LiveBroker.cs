@@ -49,8 +49,8 @@ public class LiveBroker: IBroker, ISerializable {
     var position = account.Data.Positions.FirstOrDefault(x => x.Symbol == symbolName);
 
     portfolio.totalBalance = (double)account.Data.TotalWalletBalance;
-    portfolio.asset = (double?)assetInfo?.WalletBalance ?? 0.0;
-    portfolio.currency = (double?)currencyInfo?.WalletBalance ?? 0.0;
+    portfolio.asset = (double?)position.PositionAmount ?? 0.0;
+    portfolio.currency = (double?)currencyInfo?.AvailableBalance ?? 0.0;
 
     var info = await api.ExchangeData.GetExchangeInfoAsync();
     var filter = info.Data.Symbols.First(x => x.Pair == symbolName);
@@ -69,7 +69,14 @@ public class LiveBroker: IBroker, ISerializable {
         return null;
       }
 
-      var expectAmount = portfolio.totalBalance * 0.95 * config.ratio * signal.confidence;
+      var positionConfidence = portfolio.currency / portfolio.totalBalance;
+      var expectAmount = portfolio.totalBalance * 0.95 * config.ratio * (signal.confidence - positionConfidence);
+
+      if (expectAmount < 0) {
+        MyLogger.Logger.LogInformation("Skip open long {confidence} < {positionConfidence}", signal.confidence, positionConfidence);
+        return null;
+      }
+
       var quantity = Math.Round(expectAmount / candle.close, filter.QuantityPrecision);
 
       order = await api.Trading.PlaceOrderAsync(
@@ -96,7 +103,7 @@ public class LiveBroker: IBroker, ISerializable {
     } else if (signal.kind == SignalKind.openShort) {
       var prevConfidence = this.position?.confidence ?? 0;
       if (this.position?.kind == PositionKind.@short && prevConfidence >= signal.confidence) {
-        MyLogger.Logger.LogInformation($"Skip open short {signal.confidence} < {prevConfidence}");
+        MyLogger.Logger.LogInformation("Skip open short {confidence} < {prevConfidence}", signal.confidence, prevConfidence);
         return null;
       }
 
