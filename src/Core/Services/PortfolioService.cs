@@ -12,7 +12,7 @@ public static class PortfolioService {
     var assets = positions.Data.Select(AccountPortfolioAsset.From).ToArray();
 
     var currency = account.Data.Assets.FirstOrDefault(x => x.Asset == "USDT");
-    var totalBalance = account.Data.TotalWalletBalance;
+    var totalBalance = account.Data.TotalMarginBalance;
 
     return new AccountPortfolio(
       assets: assets,

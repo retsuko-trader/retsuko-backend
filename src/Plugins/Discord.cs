@@ -26,6 +26,7 @@ public static class Discord {
     MyLogger.Logger.LogInformation("Discord bot started");
 
     EventDispatcher.OnLiveBrokerEvent += OnLiveBrokerEvent;
+    EventDispatcher.OnCallbackEvent += OnCallbackEvent;
     EventDispatcher.OnException += OnException;
   }
 
@@ -38,6 +39,12 @@ public static class Discord {
       await OnLiveBrokerOrderFilledEvent(orderFilledEvent);
     } else if (e is LiveBrokerOrderDelayedEvent orderDelayedEvent) {
       await OnLiveBrokerOrderDelayedEvent(orderDelayedEvent);
+    }
+  }
+
+  static async void OnCallbackEvent(CallbackEvent e) {
+    if (e is CallbackFailEvent failEvent) {
+      await OnCallbackFailEvent(failEvent);
     }
   }
 
@@ -286,6 +293,19 @@ delay: {(DateTime.Now - e.candle.ts).TotalHours} hours";
           .Build()
       ]
     ));
+  }
+
+  static async Task OnCallbackFailEvent(CallbackFailEvent e) {
+    await channel.SendMessageAsync(
+      text: "Processing subscription queue failed",
+      embeds: [
+        new EmbedBuilder()
+          .WithTitle($"Processing subscription queue failed: {e.contextKind}")
+          .WithDescription($"Failed to handle subscription callback for {e.id} on {e.symbol} at {e.kline}\nqueueLength: {e.queueLength}\nException: {e.exception}")
+          .WithColor(0xFF0000)
+          .Build()
+      ]
+    );
   }
 
   static async void OnException(HttpContext? context, Exception e) {

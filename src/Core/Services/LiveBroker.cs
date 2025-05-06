@@ -49,7 +49,7 @@ public class LiveBroker: IBroker, ISerializable {
     var position = account.Data.Positions.FirstOrDefault(x => x.Symbol == symbolName);
 
     portfolio.totalBalance = (double)account.Data.TotalWalletBalance;
-    portfolio.asset = (double?)position.PositionAmount ?? 0.0;
+    portfolio.asset = (double?)position?.PositionAmount ?? 0.0;
     portfolio.currency = (double?)currencyInfo?.AvailableBalance ?? 0.0;
 
     var info = await api.ExchangeData.GetExchangeInfoAsync();
@@ -65,7 +65,7 @@ public class LiveBroker: IBroker, ISerializable {
     if (signal.kind == SignalKind.openLong) {
       var prevConfidence = this.position?.confidence ?? 0;
       if (this.position?.kind == PositionKind.@long && prevConfidence >= signal.confidence) {
-        MyLogger.Logger.LogInformation($"Skip open long {signal.confidence} < {prevConfidence}");
+        MyLogger.Logger.LogInformation("Skip open long {signal.confidence} < {prevConfidence}", signal.confidence, prevConfidence);
         return null;
       }
 

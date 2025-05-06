@@ -1,5 +1,7 @@
 using System.Text.Json;
 using Binance.Net.Enums;
+using Retsuko.Core.Events;
+using Retsuko.Plugins;
 using StackExchange.Redis;
 using Kline = Binance.Net.Objects.Models.Spot.Socket.BinanceStreamKline;
 
@@ -7,6 +9,7 @@ namespace Retsuko.Core;
 
 public static class Subscriber {
   private static IDatabase db;
+  private static SemaphoreSlim processMutex = new(1, 1);
 
   static Subscriber() {
     var redis = ConnectionMultiplexer.Connect(new ConfigurationOptions {
@@ -38,31 +41,65 @@ public static class Subscriber {
   }
 
   public static async Task HandleCallbackFromWorker() {
-    var pop = await db.ListRightPopAsync("worker:queue");
+    await ProcessQueue(CallbackContextKind.Subscription);
+  }
 
-    while (pop != RedisValue.Null) {
-      var data = JsonSerializer.Deserialize<QueueData>(pop.ToString())!;
-      var result = await Handle(data);
+  public static async Task HandleCallbackManual() {
+    await ProcessQueue(CallbackContextKind.Manual);
+  }
 
-      if (!result) {
-        MyLogger.Logger.LogError("failed to handle candles from subscriber; {id} {symbol} {kline}", data.id, data.symbol, data.kline);
+  public static async Task ProcessQueue(CallbackContextKind contextKind) {
+    const string queueName = "worker:queue";
+
+    await processMutex.WaitAsync();
+
+    try {
+      var list = await db.ListRangeAsync(queueName, -1, -1);
+
+      while (list != null && list.Length > 0 && !list[0].IsNull) {
+        var pop = list[0];
+        var data = JsonSerializer.Deserialize<QueueData>(pop.ToString())!;
+        var (result, exception) = await Handle(data);
+
+        if (!result) {
+          MyLogger.Logger.LogError("failed to handle candles from subscriber; {id} {symbol} {kline}", data.id, data.symbol, data.kline);
+          EventDispatcher.Event(new CallbackFailEvent(
+            id: data.id,
+            symbol: data.symbol,
+            interval: data.interval,
+            kline: data.kline,
+            queueLength: (int)await db.ListLengthAsync(queueName),
+            contextKind: contextKind,
+            exception: exception
+          ));
+
+          break;
+        }
+
+        await db.ListRightPopAsync(queueName);
+        list = await db.ListRangeAsync(queueName, -1, -1);
       }
-
-      pop = await db.ListRightPopAsync("worker:queue");
+    } finally {
+      processMutex.Release();
     }
   }
 
-  private static async Task<bool> Handle(QueueData data) {
+  private static async Task<(bool, Exception?)> Handle(QueueData data) {
     var symbol = await Symbol.Get(data.symbol);
 
     if (!symbol.HasValue) {
-      return false;
+      return (false, new Exception($"symbol {data.symbol} not found"));
     }
 
-    var candle = Candle.From(Market.futures, symbol.Value.id, data.interval, data.kline);
-    await LiveCandleDispatcher.Dispatch(data.id, symbol.Value, data.interval, candle);
+    try {
+      var candle = Candle.From(Market.futures, symbol.Value.id, data.interval, data.kline);
+      await LiveCandleDispatcher.Dispatch(data.id, symbol.Value, data.interval, candle);
+    } catch (Exception e) {
+      MyLogger.Logger.LogError(e, "failed to handle candles from subscriber; {id} {symbol} {kline}", data.id, data.symbol, data.kline);
+      return (false, e);
+    }
 
-    return true;
+    return (true, null);
   }
 
   record QueueData(string id, string symbol, KlineInterval interval, Kline kline);

@@ -11,4 +11,11 @@ public class SubscriptionController : Controller {
 
     return Ok();
   }
+
+  [HttpPost("manual")]
+  public async Task<IActionResult> Manual() {
+    await Subscriber.HandleCallbackManual();
+
+    return Ok();
+  }
 }
