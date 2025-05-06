@@ -91,6 +91,11 @@ public class LiveBroker: IBroker, ISerializable {
 
       // don't use short, yet
     } else if (signal.kind == SignalKind.closeLong || signal.kind == SignalKind.openShort) {
+      if (this.position == null || this.position.Value.kind != PositionKind.@long) {
+        MyLogger.Logger.LogInformation("Skip close long {signal} {position}", signal.kind, this.position);
+        return null;
+      }
+
       order = await api.Trading.PlaceOrderAsync(
         symbol: symbol.Value.name,
         side: OrderSide.Sell,
