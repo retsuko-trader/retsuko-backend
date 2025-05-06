@@ -125,6 +125,11 @@ public class LiveBroker: IBroker, ISerializable {
       );
       this.position = new Position(candle.ts.ToUnixTimestamp(), PositionKind.@short, signal.confidence);
     } else if (signal.kind == SignalKind.closeShort) {
+      if (this.position == null || this.position.Value.kind != PositionKind.@short) {
+        MyLogger.Logger.LogInformation("Skip close short {signal} {position}", signal.kind, this.position);
+        return null;
+      }
+
       order = await api.Trading.PlaceOrderAsync(
         symbol: symbol.Value.name,
         side: OrderSide.Buy,
