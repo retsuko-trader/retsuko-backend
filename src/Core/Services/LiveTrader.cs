@@ -58,9 +58,13 @@ public class LiveTrader: Trader, ISerializable<LiveTraderState> {
       );
     }
 
+    var signal = await strategy.Update(candle);
+    return await HandleSignal(candle, signal, delayed, delay);
+  }
+
+  public async Task<Trade?> HandleSignal(Candle candle, Signal? signal, bool delayed = false, TimeSpan? delay = null) {
     Trade? trade = null;
 
-    var signal = await strategy.Update(candle);
     if (signal != null) {
       if (!delayed) {
         trade = await broker.HandleAdvice(candle, signal);

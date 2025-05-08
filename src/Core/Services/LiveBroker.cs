@@ -69,7 +69,7 @@ public class LiveBroker: IBroker, ISerializable {
         return null;
       }
 
-      var positionConfidence = portfolio.currency / portfolio.totalBalance;
+      var positionConfidence = portfolio.asset / portfolio.totalBalance;
       var expectAmount = portfolio.totalBalance * config.leverage * 0.95 * config.ratio * (signal.confidence - positionConfidence);
 
       if (expectAmount < 0) {

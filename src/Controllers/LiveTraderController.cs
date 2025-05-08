@@ -74,4 +74,34 @@ public class LiveTraderController : Controller {
 
     return Ok();
   }
+
+  public record ManualOrderRequest(
+    Candle candle,
+    Signal signal
+  );
+
+  [HttpPost("{id}/manual/order")]
+  public async Task<IActionResult> ManualOrder(string id, [FromBody] ManualOrderRequest req) {
+    var trader = await LiveTrader.Load(id);
+    if (trader == null) {
+      return NotFound();
+    }
+
+    var trade = await trader.HandleSignal(req.candle, req.signal);
+    await trader.Serialize().Update();
+
+    if (!trade.HasValue) {
+      return BadRequest("No trade");
+    }
+
+    return Ok(new {
+      trade.Value.ts,
+      trade.Value.signal,
+      trade.Value.confidence,
+      trade.Value.asset,
+      trade.Value.currency,
+      trade.Value.price,
+      trade.Value.profit,
+    });
+  }
 }
