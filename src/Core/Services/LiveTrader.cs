@@ -136,7 +136,7 @@ public class LiveTrader: Trader, ISerializable<LiveTraderState> {
     try {
       state.metrics = JsonSerializer.Serialize(metrics);
     } catch (Exception ex) {
-      MyLogger.Logger.LogError(ex, "Failed to serializing metrics");
+      MyLogger.Logger.LogError(ex, "Failed to serializing metrics: {metrics}", metrics);
       EventDispatcher.Exception(null, ex);
     }
 
