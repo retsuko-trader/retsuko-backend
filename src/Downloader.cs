@@ -213,7 +213,7 @@ public static class Downloader {
 
     foreach (var interval in intervals) {
       var archives = (await GetKlineArchives(symbol, interval)).OrderBy(x => x.day).ToArray();
-      MyLogger.Logger.LogInformation("Downloading {symbol} {interval}", symbol, interval);
+      MyLogger.Logger.LogTrace("Downloading {symbol} {interval}", symbol, interval);
 
       var dataset = await Dataset.GetFrom(db, interval);
 
