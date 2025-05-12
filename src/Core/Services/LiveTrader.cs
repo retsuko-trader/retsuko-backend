@@ -107,26 +107,13 @@ public class LiveTrader: Trader, ISerializable<LiveTraderState> {
       var order = trade.Value.order;
       if (order != null) {
         var liveTraderOrder = LiveTraderOrder.From(state.id, id, order);
+        var client = (broker as LiveBroker)!.client;
+        LiveOrderTracker.StartTrack(client, trade.Value, liveTraderOrder);
 
-        if (liveTraderOrder.error == null) {
-          var client = (broker as LiveBroker)!.client;
-          LiveOrderTracker.StartTrack(client, liveTraderOrder);
+        if (liveTraderOrder.error != null) {
+          MyLogger.Logger.LogError("Failed to create order {orderId}: {error}", id, liveTraderOrder.error);
         }
       }
-
-      var entity = new LiveTraderTrade(
-        id: id,
-        traderId: Id,
-        ts: DateTime.Now,
-        signal: trade.Value.signal,
-        confidence: trade.Value.confidence,
-        orderId: trade.Value.order?.Data?.Id,
-        asset: trade.Value.asset,
-        currency: trade.Value.currency,
-        price: trade.Value.price,
-        profit: trade.Value.profit
-      );
-      entity.Insert();
     }
 
     state.updatedAt = DateTime.Now;

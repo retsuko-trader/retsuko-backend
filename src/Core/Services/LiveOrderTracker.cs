@@ -5,8 +5,15 @@ using Retsuko.Plugins;
 namespace Retsuko.Core;
 
 public static class LiveOrderTracker {
-  public static async void StartTrack(BinanceRestClient client, LiveTraderOrder order) {
+  public static async void StartTrack(BinanceRestClient client, Trade trade, LiveTraderOrder order) {
     MyLogger.Logger.LogInformation("Start tracking order {orderId}: {symbol}", order.orderId, order.symbol);
+
+    if (order.error != null) {
+      MyLogger.Logger.LogError("Stop tracking order {orderId}, error={error}", order.orderId, order.error);
+      order.Insert();
+      UpdateTrade(order);
+      return;
+    }
 
     var info = await client.UsdFuturesApi.ExchangeData.GetExchangeInfoAsync();
     var filter = info.Data.Symbols.First(x => x.Pair == order.symbol);
@@ -38,6 +45,8 @@ public static class LiveOrderTracker {
             MyLogger.Logger.LogError("Insufficient balance while tracking order {orderId}: {Error}", curr.orderId, orderResp.Error);
             curr.cancelledAt = DateTime.UtcNow;
             await curr.Update();
+
+            UpdateTrade(curr);
             return;
           }
 
@@ -50,6 +59,8 @@ public static class LiveOrderTracker {
           MyLogger.Logger.LogInformation("Order {orderId} filled", curr.orderId);
           curr.closedAt = orderResp.Data.UpdateTime;
           await curr.Update();
+
+          UpdateTrade(curr);
 
           EventDispatcher.Event(new LiveBrokerOrderFilledEvent(
             order,
@@ -88,9 +99,24 @@ public static class LiveOrderTracker {
           curr = next;
         }
 
-
         await Task.Delay(1500);
       }
     });
+
+    void UpdateTrade(LiveTraderOrder order) {
+      var entity = new LiveTraderTrade(
+        id: order.tradeId,
+        traderId: order.traderId,
+        ts: DateTime.Now,
+        signal: trade.signal,
+        confidence: trade.confidence,
+        orderId: trade.order?.Data?.Id,
+        asset: trade.asset,
+        currency: trade.currency,
+        price: trade.price,
+        profit: trade.profit
+      );
+      entity.Insert();
+    }
   }
 }
