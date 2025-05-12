@@ -10,3 +10,11 @@ insert_final_newline = true
 dotnet_naming_style.first_word_upper_case_style.capitalization = camel_case
 dotnet_naming_rule.public_members_must_be_capitalized.style = camel_case
 dotnet_diagnostic.CS8618.severity = none
+
+csharp_new_line_before_open_brace = false
+csharp_new_line_before_else = false
+csharp_new_line_before_catch = false
+csharp_new_line_before_finally = false
+csharp_new_line_before_members_in_object_initializers = false
+csharp_new_line_before_members_in_anonymous_types = false
+csharp_new_line_between_query_expression_clauses = false
