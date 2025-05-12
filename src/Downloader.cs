@@ -191,7 +191,7 @@ public static class Downloader {
   }
 
   private static async Task DownloadSymbol(string symbol, Symbol[] symbols, ConcurrentBag<Dataset> datasets, CancellationToken t) {
-    MyLogger.Logger.LogInformation("Start downloading {symbol}", symbol);
+    MyLogger.Logger.LogTrace("Start downloading {symbol}", symbol);
 
     var intervals = await GetKlineIntervals(symbol);
     using var db = Database.CreateCandleDatabase(symbol);
