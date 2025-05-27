@@ -4,8 +4,6 @@
 
 > WIP!
 
-> This project is intended for real-world use and is still under development after two refactorings. When it's finished, we'll make it public with a writeup.
-
 Retsuko, Cryptocurrency algorithmic/systematic/programmatic trading framework
 
 ## features
@@ -15,7 +13,7 @@ Retsuko, Cryptocurrency algorithmic/systematic/programmatic trading framework
   - [x] run bulk backtests
   - [x] debug indicators
 - [x] live paper trading
-- [ ] live trading
+- [x] live trading
 
 ## preview
 
@@ -30,4 +28,12 @@ Retsuko, Cryptocurrency algorithmic/systematic/programmatic trading framework
 
 ## how to run
 
-It's not prepared yet. I'll make the documentation after validation.
+Workign on documentations, coming soon
+
+## profit
+
+There are included strategies, which are used in live production.
+
+Currently:
+- CAGR 80.34%
+- Max drawdown -28.96%
