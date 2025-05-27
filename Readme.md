@@ -30,10 +30,10 @@ Retsuko, Cryptocurrency algorithmic/systematic/programmatic trading framework
 
 Workign on documentations, coming soon
 
-## profit
+## strategy
 
 There are included strategies, which are used in live production.
 
-Currently:
+Currently with [SuperTrendTurtle](src/Strategies/SuperTrendTurtle.cs):
 - CAGR 80.34%
 - Max drawdown -28.96%
