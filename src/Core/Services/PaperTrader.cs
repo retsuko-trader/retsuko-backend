@@ -42,7 +42,7 @@ public class PaperTrader: Trader, ISerializable<PaperTraderState> {
   public override async Task<Trade?> Tick(Candle candle) {
     var trade = await base.Tick(candle);
 
-    var delay = DateTime.UtcNow - candle.ts;
+    var delay = DateTime.UtcNow - candle.ts - candle.interval.ToTimeSpan();
     var delayed = delay > TimeSpan.FromHours(1);
     if (delayed)  {
       MyLogger.Logger.LogWarning(
