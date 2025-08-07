@@ -47,7 +47,7 @@ public class LiveTrader: Trader, ISerializable<LiveTraderState> {
       firstCandle = candle;
     }
 
-    var delay = DateTime.UtcNow - candle.ts;
+    var delay = DateTime.UtcNow - candle.ts - candle.interval.ToTimeSpan();
     var delayed = delay > TimeSpan.FromHours(1);
     if (delayed)  {
       MyLogger.Logger.LogWarning(

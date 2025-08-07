@@ -59,6 +59,9 @@ public static class Subscriber {
       while (list != null && list.Length > 0 && !list[0].IsNull) {
         var pop = list[0];
         var data = JsonSerializer.Deserialize<QueueData>(pop.ToString())!;
+
+        MyLogger.Logger.LogInformation("Processing candle from subscriber; {id} {symbol}:{interval} {kline}", data.id, data.symbol, data.interval, data.kline);
+
         var (result, exception) = await Handle(data);
 
         if (!result) {
