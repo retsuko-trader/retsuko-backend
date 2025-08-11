@@ -87,7 +87,7 @@ public class LiveTraderController : Controller {
       return NotFound();
     }
 
-    var trade = await trader.HandleSignal(req.candle, req.signal);
+    var trade = await trader.HandleSignal(req.candle, req.signal, force: true);
     await trader.Serialize().Update();
 
     if (!trade.HasValue) {

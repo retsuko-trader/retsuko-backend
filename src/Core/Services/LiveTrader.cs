@@ -62,12 +62,12 @@ public class LiveTrader: Trader, ISerializable<LiveTraderState> {
     return await HandleSignal(candle, signal, delayed, delay);
   }
 
-  public async Task<Trade?> HandleSignal(Candle candle, Signal? signal, bool delayed = false, TimeSpan? delay = null) {
+  public async Task<Trade?> HandleSignal(Candle candle, Signal? signal, bool delayed = false, TimeSpan? delay = null, bool force = false) {
     Trade? trade = null;
 
     if (signal != null) {
       if (!delayed) {
-        trade = await broker.HandleAdvice(candle, signal);
+        trade = await broker.HandleAdvice(candle, signal, force);
       } else {
         MyLogger.Logger.LogError(
           "LiveTrader {traderId} got signal {signal} but delayed {delay} for candle {candle}",

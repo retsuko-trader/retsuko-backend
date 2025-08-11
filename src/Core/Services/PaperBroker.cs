@@ -21,7 +21,7 @@ public class PaperBroker: IBroker, ISerializable {
     position = null;
   }
 
-  public async Task<Trade?> HandleAdvice(Candle candle, Signal signal) {
+  public async Task<Trade?> HandleAdvice(Candle candle, Signal signal, bool force = false) {
     await ValueTask.CompletedTask;
 
     var kind = signal.kind;
