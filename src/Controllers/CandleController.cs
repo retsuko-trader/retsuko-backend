@@ -12,19 +12,6 @@ public class CandleController : Controller {
     return Ok(result);
   }
 
-  [HttpGet("candle/{market}/{symbolId}/{interval}")]
-  public async Task<IActionResult> GetCandle(
-    int market,
-    int symbolId,
-    KlineInterval interval,
-    [FromQuery] DateTime? start,
-    [FromQuery] DateTime? end,
-    [FromQuery] float? sampleRate
-  ) {
-    var candles = await Candle.List(symbolId, interval, start, end, sampleRate);
-    return Ok(candles);
-  }
-
   [HttpGet("symbol")]
   public async Task<IActionResult> GetSymbols() {
     var result = await Symbol.List();
@@ -43,5 +30,18 @@ public class CandleController : Controller {
     await Downloader.DownloadAll();
 
     return Ok();
+  }
+
+  [HttpGet("{market}/{symbolId}/{interval}")]
+  public async Task<IActionResult> GetCandle(
+    int market,
+    int symbolId,
+    KlineInterval interval,
+    [FromQuery] DateTime? start,
+    [FromQuery] DateTime? end,
+    [FromQuery] float? sampleRate
+  ) {
+    var candles = await Candle.List(symbolId, interval, start, end, sampleRate);
+    return Ok(candles);
   }
 }
