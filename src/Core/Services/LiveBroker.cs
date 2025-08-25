@@ -80,7 +80,7 @@ public class LiveBroker: IBroker, ISerializable {
       }
 
       var quantity = Math.Round(expectAmount / candle.close, filter.QuantityPrecision);
-      MyLogger.Logger.LogInformation("Placing order open long, prevConfidence={prevConfidence}, positionConfidence={positionConfidence}, expectAmount={expectAmount}, quantity={quantity}", prevConfidence, positionConfidence, expectAmount, quantity);
+      MyLogger.Logger.LogInformation("Placing order open long, prevConfidence={prevConfidence}, positionConfidence={positionConfidence}, confidence={signal.confidence}, expectAmount={expectAmount}, quantity={quantity}, force={force}", prevConfidence, positionConfidence, signal.confidence, expectAmount, quantity, force);
 
       order = await api.Trading.PlaceOrderAsync(
         symbol: symbol.Value.name,

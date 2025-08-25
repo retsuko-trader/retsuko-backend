@@ -124,7 +124,12 @@ public record struct Candle(
     using var db = Database.CreateCandleDatabase(symbol.Value.name);
     using var command = db.CreateCommand();
 
-    command.CommandText = $"SELECT * FROM candle WHERE interval = $interval AND ts >= $start AND ts <= $end ORDER BY ts ASC";
+    if (sampleRate.HasValue) {
+      command.CommandText = $"SELECT * FROM candle WHERE interval = $interval AND ts >= $start AND ts <= $end USING SAMPLE {sampleRate * 100}% (system, 1) ORDER BY ts ASC";
+    } else {
+      command.CommandText = $"SELECT * FROM candle WHERE interval = $interval AND ts >= $start AND ts <= $end ORDER BY ts ASC";
+    }
+
     command.Parameters.Add(new DuckDBParameter("interval", (int)interval));
     command.Parameters.Add(new DuckDBParameter("start", (start ?? DateTimeOffset.MinValue).DateTime));
     command.Parameters.Add(new DuckDBParameter("end", (end ?? DateTimeOffset.MaxValue).DateTime));
@@ -132,16 +137,7 @@ public record struct Candle(
     var reader = await command.ExecuteReaderAsync();
     var candles = new List<Candle>();
 
-    var t = 0f;
     while (reader.Read()) {
-      if (sampleRate != null) {
-        t += sampleRate.Value;
-        if (t < 1.0f) {
-          continue;
-        }
-        t = 0f;
-      }
-
       var candle = From(Market.futures, symbolId, interval, reader);
       candles.Add(candle);
     }
