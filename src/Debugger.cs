@@ -68,7 +68,7 @@ public static class Debugger {
   public static async Task DebugBacktester() {
     var config = new BacktestConfig(
       new DatasetConfig(Market.futures, 0, Binance.Net.Enums.KlineInterval.EightHour, DateTime.Parse("2021-01-01"), DateTime.Parse("2021-01-31")),
-      new StrategyConfig("Turtle", StrategyLoader.GetDefaultConfig("Turtle")!),
+      new StrategyConfig("Turtle", (await StrategyLoader.GetDefaultConfig("Turtle"))!),
       new PaperBrokerConfig(1000, 0.001, false, true)
     );
 
@@ -85,7 +85,7 @@ public static class Debugger {
   public static async Task ValidatePaperTrader() {
     var config = new BacktestConfig(
       new DatasetConfig(Market.futures, 0, Binance.Net.Enums.KlineInterval.EightHour, DateTime.Parse("2019-01-01"), DateTime.Parse("2026-01-31")),
-      new StrategyConfig("SuperTrendTurtle", StrategyLoader.GetDefaultConfig("SuperTrendTurtle")!),
+      new StrategyConfig("SuperTrendTurtle", (await StrategyLoader.GetDefaultConfig("SuperTrendTurtle"))!),
       new PaperBrokerConfig(1000, 0.001, false, true)
     );
 
@@ -136,7 +136,7 @@ public static class Debugger {
     var config = new PapertraderConfig(
       new("", ""),
       new(Market.futures, 0, Binance.Net.Enums.KlineInterval.EightHour, 0),
-      new StrategyConfig("SuperTrendTurtle", StrategyLoader.GetDefaultConfig("SuperTrendTurtle")!),
+      new StrategyConfig("SuperTrendTurtle", (await StrategyLoader.GetDefaultConfig("SuperTrendTurtle"))!),
       new PaperBrokerConfig(1000, 0.001, false, true)
     );
     var symbol = await Symbol.Get(0);

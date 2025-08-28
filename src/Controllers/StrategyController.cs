@@ -7,7 +7,7 @@ namespace Retsuko.Controllers;
 public class StrategyController: Controller {
   [HttpGet]
   public async Task<IActionResult> GetStrategies() {
-    var result = StrategyLoader.GetStrategyEntries();
+    var result = await StrategyLoader.GetStrategyEntries();
     return Ok(result);
   }
 }

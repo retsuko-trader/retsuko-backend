@@ -1,3 +1,4 @@
+using Retsuko.Clients;
 using Retsuko.Strategies;
 
 namespace Retsuko.Core;
@@ -46,12 +47,15 @@ public static class StrategyLoader {
     return strategyInfos;
   }
 
-  public static IEnumerable<ExtStrategyInfo> GetStrategyEntries() {
-    return strategies.Select(strategy => new ExtStrategyInfo(strategy.Name, strategy.Config));
+  public static async Task<IEnumerable<GStrategy>> GetStrategyEntries() {
+    var strategies = await StrategyClient.loaderClient.GetStrategiesAsync(new());
+    return strategies.Strategies;
   }
 
-  public static string? GetDefaultConfig(string name) {
-    var strategy = strategies.FirstOrDefault(strategy => strategy.Name == name);
+  public static async Task<string?> GetDefaultConfig(string name) {
+    var strategies = await StrategyClient.loaderClient.GetStrategiesAsync(new());
+
+    var strategy = strategies.Strategies.FirstOrDefault(strategy => strategy.Name == name);
     if (strategy == null) {
       return null;
     }

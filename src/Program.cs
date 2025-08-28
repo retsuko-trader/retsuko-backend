@@ -2,12 +2,12 @@ using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using Retsuko.Clients;
 using Retsuko.Core;
-using Retsuko.Migrations;
-
-await Migrations.CreateLiveTrader();
 
 const string SERVICE_NAME = "retsuko-backend";
+
+StrategyClient.Init();
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddProblemDetails();

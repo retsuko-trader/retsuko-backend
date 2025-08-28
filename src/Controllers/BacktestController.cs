@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Retsuko.Core;
 using Retsuko.Dtos;
@@ -8,10 +9,15 @@ namespace Retsuko.Controllers;
 [Route("backtest")]
 public class BacktestController: Controller {
   [HttpGet("config")]
-  public IActionResult GetConfig([FromQuery]string strategy) {
+  public async Task<IActionResult> GetConfig([FromQuery]string strategy) {
+    var config = await StrategyLoader.GetDefaultConfig(strategy);
+    if (config == null) {
+      return NotFound();
+    }
+
     return Ok(new SingleBacktestRunRequest(new BacktestConfig(
       new DatasetConfig(Market.futures, 0, Binance.Net.Enums.KlineInterval.EightHour, DateTime.Parse("2021-01-01"), DateTime.Parse("2021-01-31")),
-      new StrategyConfig(strategy, StrategyLoader.GetDefaultConfig(strategy)!),
+      new StrategyConfig(strategy, config),
       new PaperBrokerConfig(1000, 0.001, false, false)
     )));
   }
