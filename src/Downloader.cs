@@ -166,13 +166,17 @@ public static class Downloader {
     }
   }
 
-  public static async Task DownloadAll() {
+  public static async Task DownloadAll(CancellationToken ct) {
     var symbols = await Symbol.List();
 
     using var span = MyTracer.Tracer.StartActiveSpan("Downloader.DownloadCandles");
     var datasetChanges = new ConcurrentBag<Dataset>();
 
-    await Parallel.ForEachAsync(symbols, new ParallelOptions { MaxDegreeOfParallelism = 64 }, async (symbol, t) => {
+    var options = new ParallelOptions {
+      MaxDegreeOfParallelism = 64,
+      CancellationToken = ct
+    };
+    await Parallel.ForEachAsync(symbols, options, async (symbol, t) => {
       var attributes = new OpenTelemetry.Trace.SpanAttributes(new Dictionary<string, object?> {
         { "symbolId", symbol.id },
         { "symbolName", symbol.name },

@@ -26,8 +26,8 @@ public class CandleController : Controller {
   }
 
   [HttpPost("update")]
-  public async Task<IActionResult> Update() {
-    await Downloader.DownloadAll();
+  public async Task<IActionResult> Update(CancellationToken ct) {
+    await Downloader.DownloadAll(ct);
 
     return Ok();
   }
