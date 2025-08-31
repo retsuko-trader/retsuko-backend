@@ -7,31 +7,38 @@ public class Backtester: Trader {
   private readonly BacktestConfig config;
 
   public Backtester(BacktestConfig config): base(
-    StrategyLoader.CreateStrategy(config.strategy.name, config.strategy.config)!,
+    Strategy.Create(config.strategy.name, config.strategy.config)!,
     new PaperBroker(config.broker)
   ) {
     this.config = config;
   }
 
   public override async Task<Trade?> Tick(Candle candle) {
-    var trade = await  base.Tick(candle);
+    var trade = await base.Tick(candle);
 
-    var debugs = await strategy.Debug(candle);
-    foreach (var debug in debugs) {
-      var key = (debug.name, debug.index);
-      if (!debugIndicators.TryGetValue(key, out var stack)) {
-        stack = [];
-        debugIndicators[key] = stack;
-      }
+    // var debugs = await strategy.Debug(candle);
+    // foreach (var debug in debugs) {
+    //   var key = (debug.name, debug.index);
+    //   if (!debugIndicators.TryGetValue(key, out var stack)) {
+    //     stack = [];
+    //     debugIndicators[key] = stack;
+    //   }
 
-      stack.Add(new DebugIndicator(
-        ts: new DateTimeOffset(candle.ts).ToUnixTimeMilliseconds(),
-        value: debug.value
-      ));
-      debugIndicators[key] = stack;
-    }
+    //   stack.Add(new DebugIndicator(
+    //     ts: new DateTimeOffset(candle.ts).ToUnixTimeMilliseconds(),
+    //     value: debug.value
+    //   ));
+    //   debugIndicators[key] = stack;
+    // }
 
     return trade;
+  }
+
+
+
+  public override async Task CompleteMetrics() {
+    await base.CompleteMetrics();
+    await strategy.EndAndGetState();
   }
 
   public TraderReport GetReport() {

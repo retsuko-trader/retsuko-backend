@@ -1,7 +1,7 @@
 namespace Retsuko.Core;
 
 public abstract class Trader {
-  public IStrategy strategy { get; protected set; }
+  public Strategy strategy { get; protected set; }
   public IBroker broker { get; protected set; }
 
   protected List<Trade> trades;
@@ -11,7 +11,7 @@ public abstract class Trader {
   protected TraderMetrics metrics;
 
   public Trader(
-    IStrategy strategy,
+    Strategy strategy,
     IBroker broker
   ) {
     this.strategy = strategy;
@@ -26,6 +26,10 @@ public abstract class Trader {
       totalBalance = broker.InitialBalance,
       totalProfit = 1,
     };
+  }
+
+  public virtual async Task Init() {
+    await strategy.Init();
   }
 
   public virtual async Task Preload(ICandleLoader loader) {
@@ -70,6 +74,23 @@ public abstract class Trader {
 
     lastCandle = candle;
     return trade;
+  }
+
+  public virtual async Task CompleteMetrics() {
+    if (!firstCandle.HasValue || !lastCandle.HasValue) {
+      return;
+    }
+
+    var startBalance = broker.InitialBalance;
+    var portfolio = broker.GetPortfolio();
+
+    var helper = new MetricsHelper(startBalance, ref portfolio, ref metrics, ref trades, firstCandle.Value, lastCandle.Value);
+    metrics.cagr = helper.cagr();
+    metrics.avgTrades = helper.avgTrades();
+    metrics.sortino = helper.sortino();
+    metrics.sharpe = helper.sharpe();
+
+    await Task.CompletedTask;
   }
 
   protected virtual void ProcessMetrics(Candle candle, Trade? trade) {
@@ -117,12 +138,6 @@ public abstract class Trader {
       metrics.drawdownStartTs = metrics.maxBalanceTs;
       metrics.drawdownEndTs = candle.ts;
     }
-
-    var helper = new MetricsHelper(startBalance, ref portfolio, ref metrics, ref trades, firstCandle.Value, lastCandle.Value);
-    metrics.cagr = helper.cagr();
-    metrics.avgTrades = helper.avgTrades();
-    metrics.sortino = helper.sortino();
-    metrics.sharpe = helper.sharpe();
 
     metrics.endBalance = portfolio.totalBalance;
   }

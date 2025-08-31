@@ -4,7 +4,7 @@ using Retsuko.Plugins;
 
 namespace Retsuko.Core;
 
-public class LiveTrader: Trader, ISerializable<LiveTraderState> {
+public class LiveTrader: Trader, IAsyncSerializable<LiveTraderState> {
   public string Id => state.id;
 
   public readonly LiveTraderConfig config;
@@ -12,7 +12,7 @@ public class LiveTrader: Trader, ISerializable<LiveTraderState> {
   public LiveTraderState state;
 
   private LiveTrader(LiveTraderConfig config, string id): base(
-    StrategyLoader.CreateStrategy(config.strategy.name, config.strategy.config)!,
+    Strategy.Create(config.strategy.name, config.strategy.config)!,
     new LiveBroker(config.broker)
   ) {
     this.config = config;
@@ -29,7 +29,7 @@ public class LiveTrader: Trader, ISerializable<LiveTraderState> {
       dataset: JsonSerializer.Serialize(config.dataset),
       strategy_name: config.strategy.name,
       strategy_config: config.strategy.config,
-      strategy_state: strategy.Serialize(),
+      strategy_state: "",
       broker_config: JsonSerializer.Serialize(config.broker),
       broker_state: broker.Serialize(),
       metrics: JsonSerializer.Serialize(metrics),
@@ -39,7 +39,7 @@ public class LiveTrader: Trader, ISerializable<LiveTraderState> {
 
   public override async Task Preload(ICandleLoader loader) {
     await base.Preload(loader);
-    state.strategy_state = strategy.Serialize();
+    // state.strategy_state = strategy.Serialize();
   }
 
   public override async Task<Trade?> Tick(Candle candle) {
@@ -117,7 +117,7 @@ public class LiveTrader: Trader, ISerializable<LiveTraderState> {
     }
 
     state.updatedAt = DateTime.Now;
-    state.strategy_state = strategy.Serialize();
+    // state.strategy_state = strategy.Serialize();
     state.broker_state = broker.Serialize();
 
     try {
@@ -145,19 +145,26 @@ public class LiveTrader: Trader, ISerializable<LiveTraderState> {
 
     var config = state.Value.Config;
     var trader = new LiveTrader(config, id);
-    trader.Deserialize(state.Value);
+    await trader.Deserialize(state.Value);
 
     return trader;
   }
 
-  public LiveTraderState Serialize() {
+  public override async Task CompleteMetrics() {
+    await base.CompleteMetrics();
+    state.strategy_state = await strategy.EndAndGetState();
+  }
+
+  public async Task<LiveTraderState> Serialize() {
+    await ValueTask.CompletedTask;
     return state;
   }
 
-  public void Deserialize(LiveTraderState state) {
+  public async Task Deserialize(LiveTraderState state) {
     this.state = state;
 
-    strategy.Deserialize(state.strategy_state);
+    await strategy.Init(state.strategy_state);
+
     broker.Deserialize(state.broker_state);
     metrics = JsonSerializer.Deserialize<TraderMetrics>(state.metrics);
     var innerState = JsonSerializer.Deserialize<InnerState>(state.states);

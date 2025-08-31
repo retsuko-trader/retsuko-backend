@@ -21,7 +21,9 @@ public static class LiveCandleDispatcher {
     }
 
     await trader.Tick(candle);
-    await trader.Serialize().Update();
+    await trader.CompleteMetrics();
+    var state = await trader.Serialize();
+    await state.Update();
   }
 
   private static async Task HandleLiveTrader(string id, Symbol symbol, KlineInterval interval, Candle candle) {
@@ -32,6 +34,8 @@ public static class LiveCandleDispatcher {
     }
 
     await trader.Tick(candle);
-    await trader.Serialize().Update();
+    await trader.CompleteMetrics();
+    var state = await trader.Serialize();
+    await state.Update();
   }
 }

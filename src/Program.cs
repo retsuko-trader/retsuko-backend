@@ -6,14 +6,13 @@ using Retsuko.Clients;
 using Retsuko.Core;
 
 const string SERVICE_NAME = "retsuko-backend";
+const string OTE_URL = "http://localhost:4317";
 
 StrategyClient.Init();
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
-
-const string OTE_URL = "http://localhost:4317";
 
 builder.Logging.AddOpenTelemetry(options => {
   options
@@ -29,6 +28,7 @@ builder.Services.AddOpenTelemetry()
     .AddSource(SERVICE_NAME)
     .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(SERVICE_NAME))
     .AddAspNetCoreInstrumentation()
+    .AddGrpcClientInstrumentation()
     .AddOtlpExporter(otlp => {
       otlp.Endpoint = new Uri(OTE_URL);
       otlp.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.Grpc;
@@ -51,9 +51,6 @@ var app = builder.Build();
 app.UseExceptionHandler();
 
 MyLogger.Logger = app.Logger;
-
-var strategies = string.Join(',', StrategyLoader.strategies.Select(x => x.Name));
-MyLogger.Logger.LogInformation("Available strategies: {strategies}", strategies);
 
 await Retsuko.Plugins.Discord.Initialize();
 

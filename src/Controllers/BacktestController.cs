@@ -34,6 +34,8 @@ public class BacktestController: Controller {
     var loader = new BacktestCandleLoader(req.config.dataset);
     var backtester = new Backtester(req.config);
 
+    await backtester.Init();
+
     using (var preload = tracer.StartActiveSpan("Backtester.Preload")) {
       await backtester.Preload(loader);
     }
@@ -43,6 +45,8 @@ public class BacktestController: Controller {
       await backtester.Tick(await loader.LoadOne());
     }
     run.End();
+
+    await backtester.CompleteMetrics();
 
     var report = backtester.GetReport();
     if (req.hideTrades) {

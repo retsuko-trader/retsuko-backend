@@ -44,6 +44,7 @@ public class BulkBacktester {
       var loader = new BacktestCandleLoader(config.dataset);
       var backtester = new Backtester(config);
 
+      await backtester.Init();
       await backtester.Preload(loader);
 
       while (await loader.Read()) {
@@ -52,6 +53,7 @@ public class BulkBacktester {
 
       runSpan.End();
 
+      await backtester.CompleteMetrics();
       var report = backtester.GetReport();
       var single = BacktestSingle.Create(run.id, config, report.metrics);
       single.Insert();

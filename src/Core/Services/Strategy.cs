@@ -1,43 +1,88 @@
+using Grpc.Core;
+using Retsuko.Clients;
+using Google.Protobuf.WellKnownTypes;
+
 namespace Retsuko.Core;
 
-public abstract class Strategy<TConfig>: IStrategy, ISerializable where TConfig: struct {
-  public TConfig Config { get; protected set; }
+public class Strategy: IDisposable {
+  private readonly AsyncDuplexStreamingCall<StrategyInput, StrategyOutput> call;
 
-  protected List<IIndicator> indicators;
+  private readonly string name;
+  private readonly string config;
 
-  public Strategy(TConfig config) {
-    this.Config = config;
-    this.indicators = new List<IIndicator>();
+  protected Strategy(
+    AsyncDuplexStreamingCall<StrategyInput, StrategyOutput> call,
+    string name,
+    string config
+  ) {
+    this.call = call;
+
+    this.name = name;
+    this.config = config;
   }
 
-  protected T AddIndicator<T>(T indicator) where T: IIndicator {
-    indicators.Add(indicator);
-    return indicator;
+  public void Dispose() {
+    call?.Dispose();
   }
 
-  public virtual async Task Preload(Candle candle) {
-    foreach (var indicator in indicators) {
-      indicator.Update(candle);
+  public async Task Init(string? state = null) {
+    await call.RequestStream.WriteAsync(new StrategyInput {
+      Create = new StrategyInputCreate {
+        Name = name,
+        Config = config,
+        State = state ?? ""
+      }
+    });
+  }
+
+  public async Task Preload(Candle candle) {
+    await call.RequestStream.WriteAsync(new StrategyInput {
+      Preload = new StrategyInputPreload {
+        Candle = new CandleRaw {
+          Ts = Timestamp.FromDateTime(candle.ts.ToUniversalTime()),
+          Open = candle.open,
+          Close = candle.close,
+          High = candle.high,
+          Low = candle.low,
+          Volume = candle.volume
+        },
+      },
+    });
+  }
+
+  public async Task<Signal?> Update(Candle candle) {
+    await call.RequestStream.WriteAsync(new StrategyInput {
+      Update = new StrategyInputUpdate {
+        Candle = new CandleRaw {
+          Ts = Timestamp.FromDateTime(candle.ts.ToUniversalTime()),
+          Open = candle.open,
+          Close = candle.close,
+          High = candle.high,
+          Low = candle.low,
+          Volume = candle.volume
+        },
+      },
+    });
+
+    await call.ResponseStream.MoveNext();
+    var response = call.ResponseStream.Current;
+    var signal = response.Signal;
+    if (signal == null) {
+      return null;
     }
 
-    await ValueTask.CompletedTask;
+    return new Signal((SignalKind)signal.Kind, signal.Confidence);
   }
 
-  public virtual async Task<Signal?> Update(Candle candle) {
-    foreach (var indicator in indicators) {
-      indicator.Update(candle);
-    }
-
-    await ValueTask.CompletedTask;
-    return null;
+  public async Task<string> EndAndGetState() {
+    await call.RequestStream.CompleteAsync();
+    await call.ResponseStream.MoveNext();
+    var response = call.ResponseStream.Current;
+    return response.State.State;
   }
 
-  public virtual async Task<IEnumerable<DebugIndicatorInput>> Debug(Candle candle) {
-    await ValueTask.CompletedTask;
-
-    return [];
+  public static Strategy Create(string name, string config) {
+    var call = StrategyClient.runnerClient.Run();
+    return new Strategy(call, name, config);
   }
-
-  public abstract string Serialize();
-  public abstract void Deserialize(string data);
 }

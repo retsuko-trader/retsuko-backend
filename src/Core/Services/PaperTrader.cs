@@ -3,7 +3,7 @@ using Retsuko.Plugins;
 
 namespace Retsuko.Core;
 
-public class PaperTrader: Trader, ISerializable<PaperTraderState> {
+public class PaperTrader: Trader, IAsyncSerializable<PaperTraderState> {
   public string Id => state.id;
 
   private readonly PapertraderConfig config;
@@ -11,7 +11,7 @@ public class PaperTrader: Trader, ISerializable<PaperTraderState> {
   private PaperTraderState state;
 
   private PaperTrader(PapertraderConfig config, string id): base(
-    StrategyLoader.CreateStrategy(config.strategy.name, config.strategy.config)!,
+    Strategy.Create(config.strategy.name, config.strategy.config)!,
     new PaperBroker(config.broker)
   ) {
     this.config = config;
@@ -26,7 +26,7 @@ public class PaperTrader: Trader, ISerializable<PaperTraderState> {
       dataset: JsonSerializer.Serialize(config.dataset),
       strategy_name: config.strategy.name,
       strategy_config: config.strategy.config,
-      strategy_state: strategy.Serialize(),
+      strategy_state: "",
       broker_config: JsonSerializer.Serialize(config.broker),
       broker_state: broker.Serialize(),
       metrics: JsonSerializer.Serialize(metrics),
@@ -36,7 +36,6 @@ public class PaperTrader: Trader, ISerializable<PaperTraderState> {
 
   public override async Task Preload(ICandleLoader loader) {
     await base.Preload(loader);
-    state.strategy_state = strategy.Serialize();
   }
 
   public override async Task<Trade?> Tick(Candle candle) {
@@ -71,7 +70,7 @@ public class PaperTrader: Trader, ISerializable<PaperTraderState> {
     }
 
     state.updatedAt = DateTime.Now;
-    state.strategy_state = strategy.Serialize();
+    state.strategy_state = "";
     state.broker_state = broker.Serialize();
     try {
       state.metrics = JsonSerializer.Serialize(metrics);
@@ -96,19 +95,26 @@ public class PaperTrader: Trader, ISerializable<PaperTraderState> {
 
     var config = state.Value.Config;
     var trader = new PaperTrader(config, id);
-    trader.Deserialize(state.Value);
+    await trader.Deserialize(state.Value);
 
     return trader;
   }
 
-  public PaperTraderState Serialize() {
+  public override async Task CompleteMetrics() {
+    await base.CompleteMetrics();
+    state.strategy_state = await strategy.EndAndGetState();
+  }
+
+  public async Task<PaperTraderState> Serialize() {
+    await ValueTask.CompletedTask;
     return state;
   }
 
-  public void Deserialize(PaperTraderState state) {
+  public async Task Deserialize(PaperTraderState state) {
     this.state = state;
 
-    strategy.Deserialize(state.strategy_state);
+    await strategy.Init(state.strategy_state);
+
     broker.Deserialize(state.broker_state);
     metrics = JsonSerializer.Deserialize<TraderMetrics>(state.metrics);
     var innerState = JsonSerializer.Deserialize<InnerState>(state.states)!;

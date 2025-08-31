@@ -18,29 +18,46 @@ message GStrategy {
 }
 
 service GStrategyRunner {
-  rpc Create (StrategyCreate) returns (StrategyRun);
-  rpc Preload (StrategyPush) returns (Empty);
-  rpc Process (StrategyPush) returns (Empty);
-  rpc End (StrategyRun) returns (StrategyState);
+  rpc Run(stream StrategyInput) returns (stream StrategyOutput);
 }
 
-message StrategyCreate {
+message StrategyInput {
+  oneof type {
+    StrategyInputCreate create = 1;
+    StrategyInputPreload preload = 2;
+    StrategyInputUpdate update = 3;
+  }
+}
+
+message StrategyInputCreate {
   string name = 1;
   string config = 2;
   optional string state = 3;
 }
 
-message StrategyRun {
-  string id = 1;
+message StrategyInputPreload {
+  CandleRaw candle = 1;
 }
 
-message StrategyPush {
-  string id = 1;
-  repeated CandleRaw candles = 2;
+message StrategyInputUpdate {
+  CandleRaw candle = 1;
 }
 
-message StrategyState {
+message StrategyOutput {
+  oneof type {
+    StrategyOutputSignal signal = 1;
+    StrategyOutputState state = 2;
+  }
+}
+
+message StrategyOutputSignal {
+  int32 kind = 1;
+  double confidence = 2;
+}
+
+message StrategyOutputState {
   string state = 1;
+  string debug = 2;
 }
 
 message CandleRaw {

@@ -102,17 +102,17 @@ public static class Debugger {
     var paperTrader = PaperTrader.Create(paperTraderConfig);
     var backtester = new Backtester(config);
 
-    var state = paperTrader.Serialize();
+    var state = await paperTrader.Serialize();
 
     while (await loader.Read()) {
       var candle = await loader.LoadOne();
 
       paperTrader = PaperTrader.Create(paperTraderConfig);
-      paperTrader.Deserialize(state);
+      await paperTrader.Deserialize(state);
 
       var backtestTrade = await backtester.Tick(candle);
       var paperTraderTrade = await paperTrader.Tick(candle);
-      state = paperTrader.Serialize();
+      state = await paperTrader.Serialize();
 
       // if (backtestTrade.HasValue) {
       //   Console.WriteLine($"Backtest: {backtestTrade.Value.TotalBalance}");
@@ -143,7 +143,8 @@ public static class Debugger {
 
     var trader = PaperTrader.Create(config);
 
-    trader.Serialize().Insert();
+    var newState = await trader.Serialize();
+    newState.Insert();
 
     var loader = new BacktestCandleLoader(datasetConfig);
     await loader.Init();

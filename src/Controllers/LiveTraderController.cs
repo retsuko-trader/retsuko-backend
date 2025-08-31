@@ -52,7 +52,7 @@ public class LiveTraderController : Controller {
       await trader.Preload(loader);
     }
 
-    var state = trader.Serialize();
+    var state = await trader.Serialize();
 
     state.Insert();
     await Subscriber.Subscribe(trader.Id, symbol.Value.name, req.config.dataset.interval);
@@ -66,7 +66,7 @@ public class LiveTraderController : Controller {
     if (trader == null) {
       return NotFound();
     }
-    var state = trader.Serialize();
+    var state = await trader.Serialize();
     state.endedAt = DateTime.Now;
     await state.Update();
 
@@ -88,7 +88,8 @@ public class LiveTraderController : Controller {
     }
 
     var trade = await trader.HandleSignal(req.candle, req.signal, force: true);
-    await trader.Serialize().Update();
+    var state = await trader.Serialize();
+    await state.Update();
 
     if (!trade.HasValue) {
       return BadRequest("No trade");

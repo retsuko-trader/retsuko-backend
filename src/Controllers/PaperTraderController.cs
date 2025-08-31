@@ -47,7 +47,7 @@ public class PaperTraderController : Controller {
       await trader.Preload(loader);
     }
 
-    var state = trader.Serialize();
+    var state = await trader.Serialize();
 
     state.Insert();
     await Subscriber.Subscribe(trader.Id, symbol.Value.name, req.config.dataset.interval);
@@ -61,7 +61,7 @@ public class PaperTraderController : Controller {
     if (trader == null) {
       return NotFound();
     }
-    var state = trader.Serialize();
+    var state = await trader.Serialize();
     state.endedAt = DateTime.Now;
     await state.Update();
 
