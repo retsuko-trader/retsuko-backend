@@ -4,16 +4,16 @@ using Google.Protobuf.WellKnownTypes;
 
 namespace Retsuko.Core;
 
-public class Strategy: IStrategy, IDisposable {
-  protected readonly AsyncDuplexStreamingCall<StrategyInput, StrategyOutput> call;
+public class StrategyLazy: IStrategy, IDisposable {
+  protected readonly AsyncDuplexStreamingCall<StrategyInput, StrategyLazyOutput> call;
 
   private readonly string name;
   private readonly string config;
 
-  private Candle lastCandle;
+  private StrategyOutputState resultState;
 
-  protected Strategy(
-    AsyncDuplexStreamingCall<StrategyInput, StrategyOutput> call,
+  protected StrategyLazy(
+    AsyncDuplexStreamingCall<StrategyInput, StrategyLazyOutput> call,
     string name,
     string config
   ) {
@@ -65,23 +65,26 @@ public class Strategy: IStrategy, IDisposable {
         },
       },
     });
-
-    lastCandle = candle;
   }
 
   public virtual async Task<StrategyUpdateResult?> GetUpdateResult() {
     if (!await call.ResponseStream.MoveNext()) {
-      MyLogger.Logger.LogError("fatal; Strategy {strategy} stream ended unexpectedly, config={config}", name, config);
+      MyLogger.Logger.LogError("fatal; StrategyLazy {strategy} stream ended unexpectedly, config={config}", name, config);
       return null;
     }
 
     var response = call.ResponseStream.Current;
-    var signal = response.Signal;
-    if (signal == null) {
-      return new(lastCandle, null);
+    if (response.State != null) {
+      resultState = response.State;
+      return null;
     }
 
-    return new(lastCandle, new Signal((SignalKind)signal.Kind, signal.Confidence));
+    var signal = response.Signal;
+
+    return new(
+      Candle.From(signal.Candle),
+      new Signal((SignalKind)signal.Kind, signal.Confidence)
+    );
   }
 
   public async Task FinishInputs() {
@@ -89,13 +92,12 @@ public class Strategy: IStrategy, IDisposable {
   }
 
   public async Task<string> GetFinalState() {
-    await call.ResponseStream.MoveNext();
-    var response = call.ResponseStream.Current;
-    return response.State.State;
+    await ValueTask.CompletedTask;
+    return resultState.State;
   }
 
-  public static Strategy Create(string name, string config) {
-    var call = StrategyClient.runnerClient.Run();
-    return new Strategy(call, name, config);
+  public static StrategyLazy Create(string name, string config) {
+    var call = StrategyClient.runnerClient.RunLazy();
+    return new StrategyLazy(call, name, config);
   }
 }

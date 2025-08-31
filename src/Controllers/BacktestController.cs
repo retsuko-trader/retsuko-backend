@@ -46,7 +46,8 @@ public class BacktestController: Controller {
     }
     run.End();
 
-    await backtester.CompleteMetrics();
+    await backtester.ProcessSignals();
+    await backtester.FinalizeMetrics();
 
     var report = backtester.GetReport();
     if (req.hideTrades) {

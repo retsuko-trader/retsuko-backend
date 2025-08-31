@@ -21,7 +21,7 @@ public static class LiveCandleDispatcher {
     }
 
     await trader.Tick(candle);
-    await trader.CompleteMetrics();
+    await trader.FinalizeMetrics();
     var state = await trader.Serialize();
     await state.Update();
   }
@@ -34,7 +34,7 @@ public static class LiveCandleDispatcher {
     }
 
     await trader.Tick(candle);
-    await trader.CompleteMetrics();
+    await trader.FinalizeMetrics();
     var state = await trader.Serialize();
     await state.Update();
   }

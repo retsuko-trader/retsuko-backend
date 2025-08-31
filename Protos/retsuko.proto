@@ -19,6 +19,7 @@ message GStrategy {
 
 service GStrategyRunner {
   rpc Run(stream StrategyInput) returns (stream StrategyOutput);
+  rpc RunLazy(stream StrategyInput) returns (stream StrategyLazyOutput);
 }
 
 message StrategyInput {
@@ -58,6 +59,19 @@ message StrategyOutputSignal {
 message StrategyOutputState {
   string state = 1;
   string debug = 2;
+}
+
+message StrategyLazyOutput {
+  oneof type {
+    StrategyOutputSignalWithCandle signal = 1;
+    StrategyOutputState state = 2;
+  }
+}
+
+message StrategyOutputSignalWithCandle {
+  int32 kind = 1;
+  double confidence = 2;
+  CandleRaw candle = 3;
 }
 
 message CandleRaw {

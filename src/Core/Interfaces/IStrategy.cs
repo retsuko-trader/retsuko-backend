@@ -1,14 +1,15 @@
 namespace Retsuko.Core;
 
-public interface IStrategy: ISerializable {
+public record struct StrategyUpdateResult(
+  Candle candle,
+  Signal? signal
+);
+
+public interface IStrategy {
+  Task Init(string? state = null);
   Task Preload(Candle candle);
-
-  Task<Signal?> Update(Candle candle);
-  Task<IEnumerable<DebugIndicatorInput>> Debug(Candle candle);
-}
-
-public interface IStrategyCreate<T> where T: IStrategyCreate<T> {
-  static abstract string Name { get; }
-  static abstract string DefaultConfig { get; }
-  static abstract T Create(string config);
+  Task Update(Candle candle);
+  Task<StrategyUpdateResult?> GetUpdateResult();
+  Task FinishInputs();
+  Task<string> GetFinalState();
 }

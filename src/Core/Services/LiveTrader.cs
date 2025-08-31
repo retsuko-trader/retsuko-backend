@@ -4,7 +4,7 @@ using Retsuko.Plugins;
 
 namespace Retsuko.Core;
 
-public class LiveTrader: Trader, IAsyncSerializable<LiveTraderState> {
+public class LiveTrader: Trader<Strategy>, IAsyncSerializable<LiveTraderState> {
   public string Id => state.id;
 
   public readonly LiveTraderConfig config;
@@ -58,8 +58,14 @@ public class LiveTrader: Trader, IAsyncSerializable<LiveTraderState> {
       );
     }
 
-    var signal = await strategy.Update(candle);
-    return await HandleSignal(candle, signal, delayed, delay);
+    await strategy.Update(candle);
+    var signal = await strategy.GetUpdateResult();
+    if (!signal.HasValue) {
+      MyLogger.Logger.LogError("fatal; LiveTrader stream ended unexpectedly");
+      return null;
+    }
+
+    return await HandleSignal(candle, signal.Value.signal, delayed, delay);
   }
 
   public async Task<Trade?> HandleSignal(Candle candle, Signal? signal, bool delayed = false, TimeSpan? delay = null, bool force = false) {
@@ -150,9 +156,10 @@ public class LiveTrader: Trader, IAsyncSerializable<LiveTraderState> {
     return trader;
   }
 
-  public override async Task CompleteMetrics() {
-    await base.CompleteMetrics();
-    state.strategy_state = await strategy.EndAndGetState();
+  public override async Task FinalizeMetrics() {
+    await base.FinalizeMetrics();
+    await strategy.FinishInputs();
+    state.strategy_state = await strategy.GetFinalState();
   }
 
   public async Task<LiveTraderState> Serialize() {

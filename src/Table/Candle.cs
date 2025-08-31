@@ -35,6 +35,19 @@ public record struct Candle(
     );
   }
 
+  public static Candle From(CandleRaw data) {
+    return new Candle(
+      Market.futures,
+      -1,
+      KlineInterval.OneSecond,
+      data.Ts.ToDateTime(),
+      data.Open,
+      data.High,
+      data.Low,
+      data.Close,
+      data.Volume
+    );
+  }
 
   public static Candle From(Market market, int symbolId, KlineInterval interval, System.Data.Common.DbDataReader reader) {
     return new Candle(
@@ -50,7 +63,7 @@ public record struct Candle(
     );
   }
 
-  public void AppendRow(DuckDB.NET.Data.IDuckDBAppenderRow row) {
+  public void AppendRow(IDuckDBAppenderRow row) {
     row.AppendValue((int)market)
       .AppendValue(symbolId)
       .AppendValue((int)interval)

@@ -1,7 +1,7 @@
 namespace Retsuko.Core;
 
-public abstract class Trader {
-  public Strategy strategy { get; protected set; }
+public abstract class Trader<TStrategy> where TStrategy: IStrategy {
+  public TStrategy strategy { get; protected set; }
   public IBroker broker { get; protected set; }
 
   protected List<Trade> trades;
@@ -11,7 +11,7 @@ public abstract class Trader {
   protected TraderMetrics metrics;
 
   public Trader(
-    Strategy strategy,
+    TStrategy strategy,
     IBroker broker
   ) {
     this.strategy = strategy;
@@ -47,9 +47,19 @@ public abstract class Trader {
       firstCandle = candle;
     }
 
+    await strategy.Update(candle);
+    var signal = await strategy.GetUpdateResult();
+    if (!signal.HasValue) {
+      MyLogger.Logger.LogError("fatal; Trader stream ended unexpectedly");
+      return null;
+    }
+
+    return await TickManual(candle, signal.Value.signal);
+  }
+
+  public async virtual Task<Trade?> TickManual(Candle candle, Signal? signal) {
     Trade? trade = null;
 
-    var signal = await strategy.Update(candle);
     if (signal != null) {
       trade = await broker.HandleAdvice(candle, signal);
       if (trade.HasValue) {
@@ -76,7 +86,7 @@ public abstract class Trader {
     return trade;
   }
 
-  public virtual async Task CompleteMetrics() {
+  public virtual async Task FinalizeMetrics() {
     if (!firstCandle.HasValue || !lastCandle.HasValue) {
       return;
     }
@@ -90,7 +100,7 @@ public abstract class Trader {
     metrics.sortino = helper.sortino();
     metrics.sharpe = helper.sharpe();
 
-    await Task.CompletedTask;
+    await ValueTask.CompletedTask;
   }
 
   protected virtual void ProcessMetrics(Candle candle, Trade? trade) {

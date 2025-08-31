@@ -1,20 +1,25 @@
 
 namespace Retsuko.Core;
 
-public class Backtester: Trader {
+public class Backtester: Trader<StrategyLazy> {
   private readonly Dictionary<(string, int), List<DebugIndicator>> debugIndicators = [];
 
   private readonly BacktestConfig config;
 
   public Backtester(BacktestConfig config): base(
-    Strategy.Create(config.strategy.name, config.strategy.config)!,
+    StrategyLazy.Create(config.strategy.name, config.strategy.config)!,
     new PaperBroker(config.broker)
   ) {
     this.config = config;
   }
 
   public override async Task<Trade?> Tick(Candle candle) {
-    var trade = await base.Tick(candle);
+    if (!firstCandle.HasValue) {
+      firstCandle = candle;
+    }
+
+    await strategy.Update(candle);
+    return null;
 
     // var debugs = await strategy.Debug(candle);
     // foreach (var debug in debugs) {
@@ -30,15 +35,20 @@ public class Backtester: Trader {
     //   ));
     //   debugIndicators[key] = stack;
     // }
+  }
 
-    return trade;
+  public async Task ProcessSignals() {
+    await strategy.FinishInputs();
+    var result = await strategy.GetUpdateResult();
+    while (result.HasValue) {
+      await TickManual(result.Value.candle, result.Value.signal);
+      result = await strategy.GetUpdateResult();
+    }
   }
 
 
-
-  public override async Task CompleteMetrics() {
-    await base.CompleteMetrics();
-    await strategy.EndAndGetState();
+  public override async Task FinalizeMetrics() {
+    await base.FinalizeMetrics();
   }
 
   public TraderReport GetReport() {

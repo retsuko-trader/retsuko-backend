@@ -3,7 +3,7 @@ using Retsuko.Plugins;
 
 namespace Retsuko.Core;
 
-public class PaperTrader: Trader, IAsyncSerializable<PaperTraderState> {
+public class PaperTrader: Trader<Strategy>, IAsyncSerializable<PaperTraderState> {
   public string Id => state.id;
 
   private readonly PapertraderConfig config;
@@ -100,9 +100,10 @@ public class PaperTrader: Trader, IAsyncSerializable<PaperTraderState> {
     return trader;
   }
 
-  public override async Task CompleteMetrics() {
-    await base.CompleteMetrics();
-    state.strategy_state = await strategy.EndAndGetState();
+  public override async Task FinalizeMetrics() {
+    await base.FinalizeMetrics();
+    await strategy.FinishInputs();
+    state.strategy_state = await strategy.GetFinalState();
   }
 
   public async Task<PaperTraderState> Serialize() {

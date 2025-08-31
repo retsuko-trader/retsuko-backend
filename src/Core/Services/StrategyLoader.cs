@@ -2,17 +2,6 @@ using Retsuko.Clients;
 
 namespace Retsuko.Core;
 
-public record StrategyInfo(
-  string Name,
-  string Config,
-  Func<string, IStrategy> CreateFn
-);
-
-public record ExtStrategyInfo(
-  string Name,
-  string Config
-);
-
 public static class StrategyLoader {
   public static async Task<IEnumerable<GStrategy>> GetStrategyEntries() {
     var strategies = await StrategyClient.loaderClient.GetStrategiesAsync(new());
