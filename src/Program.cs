@@ -29,12 +29,15 @@ builder.Services.AddOpenTelemetry()
     .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(SERVICE_NAME))
     .AddAspNetCoreInstrumentation()
     .AddGrpcClientInstrumentation()
+    .AddHttpClientInstrumentation()
+    .AddRedisInstrumentation()
     .AddOtlpExporter(otlp => {
       otlp.Endpoint = new Uri(OTE_URL);
       otlp.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.Grpc;
     }))
   .WithMetrics(metrics => metrics
     .AddAspNetCoreInstrumentation()
+    .AddHttpClientInstrumentation()
     .AddOtlpExporter(otlp => {
       otlp.Endpoint = new Uri(OTE_URL);
       otlp.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.Grpc;
