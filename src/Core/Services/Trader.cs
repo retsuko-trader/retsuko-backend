@@ -37,8 +37,12 @@ public abstract class Trader<TStrategy> where TStrategy: IStrategy {
 
     var candles = await loader.Preload();
 
-    foreach (var candle in candles) {
-      await strategy.Preload(candle);
+    if (strategy is StrategyLazy lazy) {
+      await lazy.PreloadBulk(candles);
+    } else {
+      foreach (var candle in candles) {
+        await strategy.Preload(candle);
+      }
     }
   }
 

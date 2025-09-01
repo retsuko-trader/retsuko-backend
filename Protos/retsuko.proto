@@ -19,7 +19,7 @@ message GStrategy {
 
 service GStrategyRunner {
   rpc Run(stream StrategyInput) returns (stream StrategyOutput);
-  rpc RunLazy(stream StrategyInput) returns (stream StrategyLazyOutput);
+  rpc RunLazy(stream StrategyInputBatch) returns (stream StrategyLazyOutputBatch);
 }
 
 message StrategyInput {
@@ -27,6 +27,14 @@ message StrategyInput {
     StrategyInputCreate create = 1;
     StrategyInputPreload preload = 2;
     StrategyInputUpdate update = 3;
+  }
+}
+
+message StrategyInputBatch {
+  oneof type {
+    StrategyInputCreate create = 1;
+    StrategyInputPreloadBatch preload = 2;
+    StrategyInputUpdateBatch update = 3;
   }
 }
 
@@ -40,8 +48,16 @@ message StrategyInputPreload {
   CandleRaw candle = 1;
 }
 
+message StrategyInputPreloadBatch {
+  repeated CandleRaw candles = 1;
+}
+
 message StrategyInputUpdate {
   CandleRaw candle = 1;
+}
+
+message StrategyInputUpdateBatch {
+  repeated CandleRaw candles = 1;
 }
 
 message StrategyOutput {
@@ -60,6 +76,11 @@ message StrategyOutputState {
   string state = 1;
   string debug = 2;
 }
+
+message StrategyLazyOutputBatch {
+  repeated StrategyLazyOutput outputs = 1;
+}
+
 
 message StrategyLazyOutput {
   oneof type {

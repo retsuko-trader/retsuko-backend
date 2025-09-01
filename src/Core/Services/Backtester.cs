@@ -37,6 +37,14 @@ public class Backtester: Trader<StrategyLazy> {
     // }
   }
 
+  public async Task TickBulk(IEnumerable<Candle> candles) {
+    if (!firstCandle.HasValue) {
+      firstCandle = candles.First();
+    }
+
+    await strategy.UpdateBulk(candles);
+  }
+
   public async Task ProcessSignals() {
     await strategy.FinishInputs();
     var result = await strategy.GetUpdateResult();
