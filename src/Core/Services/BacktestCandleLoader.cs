@@ -49,6 +49,22 @@ public class BacktestCandleLoader: ICandleLoader, IDisposable {
     return Candle.From(config.market, config.symbolId, config.interval, reader);
   }
 
+  public async IAsyncEnumerable<IEnumerable<Candle>> BatchLoad(int chunkSize) {
+    var list = new Queue<Candle>(chunkSize);
+    while (await Read()) {
+      list.Enqueue(await LoadOne());
+
+      if (list.Count >= chunkSize) {
+        yield return list.ToArray();
+        list.Clear();
+      }
+    }
+
+    if (list.Count > 0) {
+      yield return list.ToArray();
+    }
+  }
+
   public void Dispose() {
     db.Dispose();
     GC.SuppressFinalize(this);

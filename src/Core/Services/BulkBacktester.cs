@@ -47,8 +47,8 @@ public class BulkBacktester {
       await backtester.Init();
       await backtester.Preload(loader);
 
-      while (await loader.Read()) {
-        await backtester.Tick(await loader.LoadOne());
+      await foreach (var chunk in loader.BatchLoad(200)) {
+        await backtester.TickBulk(chunk);
       }
 
       runSpan.End();

@@ -42,18 +42,8 @@ public class BacktestController: Controller {
 
     var run = tracer.StartActiveSpan("Backtester.Run");
 
-    var list = new Queue<Candle>();
-    while (await loader.Read()) {
-      list.Enqueue(await loader.LoadOne());
-
-      if (list.Count >= 200) {
-        await backtester.TickBulk(list);
-        list.Clear();
-      }
-    }
-
-    if (list.Count > 0) {
-      await backtester.TickBulk(list);
+    await foreach (var chunk in loader.BatchLoad(200)) {
+      await backtester.TickBulk(chunk);
     }
     run.End();
 
