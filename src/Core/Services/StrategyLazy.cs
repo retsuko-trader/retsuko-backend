@@ -119,7 +119,7 @@ public class StrategyLazy: IStrategy, IDisposable {
   }
 
   public static StrategyLazy Create(string name, string config) {
-    var call = StrategyClient.runnerClient.RunLazy();
+    var call = StrategyClient.devRunnerClient.RunLazy();
     return new StrategyLazy(call, name, config);
   }
 }
