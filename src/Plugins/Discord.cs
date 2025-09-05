@@ -38,7 +38,7 @@ public static class Discord {
 
     if (portfolio.assets.Length == 0) {
       await client.SetActivityAsync(new Game(
-        $"{portfolio.currency:P2}/{portfolio.totalBalance:P1}",
+        $"{portfolio.currency:C1}/{portfolio.totalBalance:C1}",
         ActivityType.Listening
       ));
       return;
@@ -49,7 +49,7 @@ public static class Discord {
     var confidence = 1 - portfolio.currency / portfolio.totalBalance;
 
     await client.SetActivityAsync(new Game(
-      $"{confidence:P1} / {profit:P2} (${profitBalance:N2})",
+      $"{confidence:P1} / {profit:P2} ({profitBalance:C2})",
       ActivityType.Playing
     ));
   }
