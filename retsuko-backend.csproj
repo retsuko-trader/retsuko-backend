@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <PackageReference Include="Binance.Net" Version="10.16.2" />
+    <PackageReference Include="coravel" Version="6.0.2" />
     <PackageReference Include="cuid.net" Version="6.0.1" />
     <PackageReference Include="Discord.Net" Version="3.17.2" />
     <PackageReference Include="DuckDB.NET.Data.Full" Version="1.2.0" />

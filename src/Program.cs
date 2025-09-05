@@ -1,9 +1,10 @@
+using Coravel;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Retsuko.Clients;
-using Retsuko.Core;
+using Retsuko.Plugins;
 
 const string SERVICE_NAME = "retsuko-backend";
 const string OTE_URL = "http://localhost:4317";
@@ -12,6 +13,7 @@ StrategyClient.Init();
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddProblemDetails();
+builder.Services.AddScheduler();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 builder.Logging.AddOpenTelemetry(options => {
@@ -57,6 +59,11 @@ builder.Services.AddMvc()
 
 var app = builder.Build();
 app.UseExceptionHandler();
+
+app.Services.UseScheduler(scheduler => {
+  scheduler.ScheduleAsync(DiscordCron.Job)
+    .EverySeconds(10);
+});
 
 MyLogger.Logger = app.Logger;
 

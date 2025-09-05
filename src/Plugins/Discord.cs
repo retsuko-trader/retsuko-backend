@@ -1,6 +1,6 @@
 using Discord;
-using Discord.Webhook;
 using Discord.WebSocket;
+using Retsuko.Core;
 using Retsuko.Core.Events;
 
 namespace Retsuko.Plugins;
@@ -28,6 +28,30 @@ public static class Discord {
     EventDispatcher.OnLiveBrokerEvent += OnLiveBrokerEvent;
     EventDispatcher.OnCallbackEvent += OnCallbackEvent;
     EventDispatcher.OnException += OnException;
+  }
+
+  public static async Task SetPresence(AccountPortfolio portfolio) {
+    if (client == null) {
+      MyLogger.Logger.LogWarning("Discord client not initialized");
+      return;
+    }
+
+    if (portfolio.assets.Length == 0) {
+      await client.SetActivityAsync(new Game(
+        $"{portfolio.currency:P2}/{portfolio.totalBalance:P1}",
+        ActivityType.Listening
+      ));
+      return;
+    }
+
+    var profit = portfolio.assets.Sum(x => x.profit);
+    var profitBalance = portfolio.assets.Sum(x => x.profitBalance);
+    var confidence = 1 - portfolio.currency / portfolio.totalBalance;
+
+    await client.SetActivityAsync(new Game(
+      $"{confidence:P1} / {profit:P2} (${profitBalance:N2})",
+      ActivityType.Playing
+    ));
   }
 
   static async void OnLiveBrokerEvent(LiveBrokerEvent e) {

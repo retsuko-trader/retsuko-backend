@@ -131,7 +131,7 @@ public static class Downloader {
 
       while (!sr.EndOfStream) {
         var line = await sr.ReadLineAsync(t);
-        if (line.StartsWith("open")) {
+        if (line == null || line.StartsWith("open")) {
           continue;
         }
 
