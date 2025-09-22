@@ -62,7 +62,8 @@ app.UseExceptionHandler();
 
 app.Services.UseScheduler(scheduler => {
   scheduler.ScheduleAsync(DiscordCron.Job)
-    .EverySeconds(10);
+    .EverySeconds(10)
+    .PreventOverlapping("discord-cron");
 });
 
 MyLogger.Logger = app.Logger;
