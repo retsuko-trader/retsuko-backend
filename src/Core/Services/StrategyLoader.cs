@@ -3,8 +3,9 @@ using Retsuko.Clients;
 namespace Retsuko.Core;
 
 public static class StrategyLoader {
-  public static async Task<IEnumerable<GStrategy>> GetStrategyEntries() {
-    var strategies = await StrategyClient.loaderClient.GetStrategiesAsync(new());
+  public static async Task<IEnumerable<GStrategy>> GetStrategyEntries(bool dev) {
+    var client = dev ? StrategyClient.devLoaderClient : StrategyClient.loaderClient;
+    var strategies = await client.GetStrategiesAsync(new());
     return strategies.Strategies;
   }
 
