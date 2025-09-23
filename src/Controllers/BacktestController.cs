@@ -24,7 +24,8 @@ public class BacktestController: Controller {
 
   public record SingleBacktestRunRequest(
     [Required] BacktestConfig config,
-    bool hideTrades = false
+    bool hideTrades = false,
+    bool debug = false
   );
 
   [HttpPost("single/run")]
@@ -34,7 +35,7 @@ public class BacktestController: Controller {
     var loader = new BacktestCandleLoader(req.config.dataset);
     var backtester = new Backtester(req.config);
 
-    await backtester.Init();
+    await backtester.Init(req.debug);
 
     using (var preload = tracer.StartActiveSpan("Backtester.Preload")) {
       await backtester.Preload(loader);
@@ -50,7 +51,7 @@ public class BacktestController: Controller {
     await backtester.ProcessSignals();
     await backtester.FinalizeMetrics();
 
-    var report = backtester.GetReport();
+    var report = await backtester.GetReport();
     if (req.hideTrades) {
       return Ok(report with { trades = [] });
     }

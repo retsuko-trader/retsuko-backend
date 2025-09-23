@@ -1,18 +1,12 @@
 namespace Retsuko.Core;
 
-public record DebugIndicator(
+public record DebugIndicatorEntry(
   long ts,
   float value
 );
 
-public record DebugIndicatorInput(
+public record DebugIndicator(
   string name,
   int index,
-  float value
-);
-
-public record ExtDebugIndicator(
-  string name,
-  int index,
-  IEnumerable<DebugIndicator> values
+  DebugIndicatorEntry[] values
 );

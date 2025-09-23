@@ -1,6 +1,7 @@
 using Grpc.Core;
 using Retsuko.Clients;
 using Google.Protobuf.WellKnownTypes;
+using System.Text.Json;
 
 namespace Retsuko.Core;
 
@@ -29,12 +30,13 @@ public class StrategyLazy: IStrategy, IDisposable {
     call?.Dispose();
   }
 
-  public async Task Init(string? state = null) {
+  public async Task Init(string? state = null, bool debug = false) {
     await call.RequestStream.WriteAsync(new StrategyInputBatch {
       Create = new StrategyInputCreate {
         Name = name,
         Config = config,
-        State = state ?? ""
+        State = state ?? "",
+        Debug = debug
       }
     });
   }
@@ -116,6 +118,31 @@ public class StrategyLazy: IStrategy, IDisposable {
   public async Task<string> GetFinalState() {
     await ValueTask.CompletedTask;
     return resultState.State;
+  }
+
+  public async Task<DebugIndicator[]> GetDebugIndicators() {
+    var results = new List<DebugIndicator>();
+
+    while (await call.ResponseStream.MoveNext()) {
+      var response = call.ResponseStream.Current;
+      foreach (var output in response.Outputs) {
+        if (output.Debug == null) {
+          MyLogger.Logger.LogWarning("warn; StrategyLazy {strategy} received non-debug output while fetching debug indicators, config={config}", name, config);
+          break;
+        }
+
+        results.Add(new DebugIndicator(
+          output.Debug.Indicator.Name,
+          output.Debug.Indicator.Index,
+          output.Debug.Indicator.Values.Select(v => new DebugIndicatorEntry(
+            v.Ts,
+            v.Value
+          )).ToArray()
+        ));
+      }
+    }
+
+    return results.ToArray();
   }
 
   public static StrategyLazy Create(string name, string config) {

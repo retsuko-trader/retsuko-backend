@@ -55,7 +55,7 @@ public class BulkBacktester {
 
       await backtester.ProcessSignals();
       await backtester.FinalizeMetrics();
-      var report = backtester.GetReport();
+      var report = await backtester.GetReport();
       var single = BacktestSingle.Create(run.id, config, report.metrics);
       single.Insert();
 

@@ -27,12 +27,13 @@ public class Strategy: IStrategy, IDisposable {
     call?.Dispose();
   }
 
-  public async Task Init(string? state = null) {
+  public async Task Init(string? state = null, bool debug = false) {
     await call.RequestStream.WriteAsync(new StrategyInput {
       Create = new StrategyInputCreate {
         Name = name,
         Config = config,
-        State = state ?? ""
+        State = state ?? "",
+        Debug = debug
       }
     });
   }
@@ -92,6 +93,11 @@ public class Strategy: IStrategy, IDisposable {
     await call.ResponseStream.MoveNext();
     var response = call.ResponseStream.Current;
     return response.State.State;
+  }
+
+  public async Task<DebugIndicator[]> GetDebugIndicators() {
+    await ValueTask.CompletedTask;
+    return [];
   }
 
   public static Strategy Create(string name, string config) {

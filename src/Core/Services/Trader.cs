@@ -28,8 +28,8 @@ public abstract class Trader<TStrategy> where TStrategy: IStrategy {
     };
   }
 
-  public virtual async Task Init() {
-    await strategy.Init();
+  public virtual async Task Init(bool debug = false) {
+    await strategy.Init(debug: debug);
   }
 
   public virtual async Task Preload(ICandleLoader loader) {

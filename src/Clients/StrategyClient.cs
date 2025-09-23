@@ -43,7 +43,6 @@ public class StrategyClient {
 
     devLoaderClient = new GStrategyLoader.GStrategyLoaderClient(channel);
     devRunnerClient = new GStrategyRunner.GStrategyRunnerClient(channel);
-
   }
 
   class SocketFactory(EndPoint endpoint) {

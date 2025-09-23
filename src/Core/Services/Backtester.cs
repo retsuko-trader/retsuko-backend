@@ -59,15 +59,8 @@ public class Backtester: Trader<StrategyLazy> {
     await base.FinalizeMetrics();
   }
 
-  public TraderReport GetReport() {
-    var dts = new List<ExtDebugIndicator>();
-    foreach (var (key, stack) in debugIndicators) {
-      dts.Add(new ExtDebugIndicator(
-        name: key.Item1,
-        index: key.Item2,
-        values: stack
-      ));
-    }
+  public async Task<TraderReport> GetReport() {
+    var dts = await strategy.GetDebugIndicators();
 
     return new TraderReport(
       config,

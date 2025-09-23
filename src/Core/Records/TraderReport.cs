@@ -4,7 +4,7 @@ public record struct TraderReport(
   BacktestConfig config,
   IEnumerable<Trade> trades,
   TraderMetrics metrics,
-  IEnumerable<ExtDebugIndicator> debugIndicators
+  IEnumerable<DebugIndicator> debugIndicators
 );
 
 public record struct TraderMetrics(
