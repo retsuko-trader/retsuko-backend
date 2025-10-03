@@ -11,7 +11,7 @@ public static class LiveOrderTracker {
     if (order.error != null) {
       MyLogger.Logger.LogError("Stop tracking order {orderId}, error={error}", order.orderId, order.error);
       order.Insert();
-      UpdateTrade(order);
+      await UpdateTrade(order);
       return;
     }
 
@@ -39,14 +39,14 @@ public static class LiveOrderTracker {
           orderResp
         ));
 
-        if (orderResp.Error != null) {
+        if (orderResp?.Error != null) {
           // insufficient balance
           if (orderResp.Error.Code == -2018) {
             MyLogger.Logger.LogError("Insufficient balance while tracking order {orderId}: {Error}", curr.orderId, orderResp.Error);
             curr.cancelledAt = DateTime.UtcNow;
             await curr.Update();
 
-            UpdateTrade(curr);
+            await UpdateTrade(curr);
             return;
           }
 
@@ -55,12 +55,12 @@ public static class LiveOrderTracker {
           continue;
         }
 
-        if (orderResp.Data.Status == Binance.Net.Enums.OrderStatus.Filled) {
+        if (orderResp?.Data.Status == Binance.Net.Enums.OrderStatus.Filled) {
           MyLogger.Logger.LogInformation("Order {orderId} filled", curr.orderId);
           curr.closedAt = orderResp.Data.UpdateTime;
           await curr.Update();
 
-          UpdateTrade(curr);
+          await UpdateTrade(curr);
 
           EventDispatcher.Event(new LiveBrokerOrderFilledEvent(
             order,
@@ -78,7 +78,7 @@ public static class LiveOrderTracker {
         var editResp = await client.UsdFuturesApi.Trading.EditOrderAsync(
           symbol: order.symbol,
           side: order.side,
-          quantity: orderResp.Data.Quantity,
+          quantity: orderResp?.Data.Quantity ?? -1,
           price: newPrice,
           orderId: curr.orderId
         );
@@ -103,7 +103,10 @@ public static class LiveOrderTracker {
       }
     });
 
-    void UpdateTrade(LiveTraderOrder order) {
+    async Task UpdateTrade(LiveTraderOrder order) {
+      var portfolio = await PortfolioService.Get();
+      var asset = portfolio.assets.FirstOrDefault(x => x.symbol == order.symbol).amount;
+
       var entity = new LiveTraderTrade(
         id: order.tradeId,
         traderId: order.traderId,
@@ -111,8 +114,8 @@ public static class LiveOrderTracker {
         signal: trade.signal,
         confidence: trade.confidence,
         orderId: trade.order?.Data?.Id,
-        asset: trade.asset,
-        currency: trade.currency,
+        asset: asset,
+        currency: portfolio.currency,
         price: trade.price,
         profit: trade.profit
       );
