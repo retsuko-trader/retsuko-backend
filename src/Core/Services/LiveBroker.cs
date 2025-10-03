@@ -72,7 +72,8 @@ public class LiveBroker: IBroker, ISerializable {
       }
 
       var positionConfidence = portfolio.asset / portfolio.totalBalance;
-      var expectAmount = portfolio.totalBalance * 0.95 * config.ratio * (signal.confidence - positionConfidence);
+      var prevPurchasedAmount = portfolio.asset * positionConfidence;
+      var expectAmount = portfolio.totalBalance * 0.95 * config.ratio * signal.confidence - prevPurchasedAmount;
 
       if (expectAmount < 0) {
         MyLogger.Logger.LogInformation("Skip open long {confidence} < {positionConfidence}", signal.confidence, positionConfidence);

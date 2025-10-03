@@ -41,7 +41,7 @@ public class BacktestController: Controller {
       await backtester.Preload(loader);
     }
 
-    var run = tracer.StartActiveSpan("Backtester.Run");
+    using var run = tracer.StartActiveSpan("Backtester.Run");
 
     await foreach (var chunk in loader.BatchLoad(200)) {
       await backtester.TickBulk(chunk);
