@@ -48,8 +48,10 @@ public class LiveBroker: IBroker, ISerializable {
 
     var position = account.Data.Positions.FirstOrDefault(x => x.Symbol == symbolName);
 
+    var newPortfolio = await PortfolioService.Get();
+
     portfolio.totalBalance = (double)account.Data.TotalWalletBalance;
-    portfolio.asset = (double?)position?.PositionAmount ?? 0.0;
+    portfolio.asset = newPortfolio.assets.FirstOrDefault(x => x.symbol == symbolName).amount;
     portfolio.currency = (double?)currencyInfo?.AvailableBalance ?? 0.0;
 
     var info = await api.ExchangeData.GetExchangeInfoAsync();
@@ -71,17 +73,15 @@ public class LiveBroker: IBroker, ISerializable {
         }
       }
 
-      var positionConfidence = portfolio.asset / portfolio.totalBalance;
-      var prevPurchasedAmount = portfolio.asset * positionConfidence;
-      var expectAmount = portfolio.totalBalance * 0.95 * config.ratio * signal.confidence - prevPurchasedAmount;
+      var expectAmount = portfolio.totalBalance * 0.95 * config.ratio * (signal.confidence - prevConfidence);
 
       if (expectAmount < 0) {
-        MyLogger.Logger.LogInformation("Skip open long {confidence} < {positionConfidence}", signal.confidence, positionConfidence);
+        MyLogger.Logger.LogInformation("Skip open long {confidence} < {prevConfidence}", signal.confidence, prevConfidence);
         return null;
       }
 
       var quantity = Math.Round(expectAmount / candle.close, filter.QuantityPrecision);
-      MyLogger.Logger.LogInformation("Placing order open long, prevConfidence={prevConfidence}, positionConfidence={positionConfidence}, confidence={signal.confidence}, expectAmount={expectAmount}, quantity={quantity}, force={force}", prevConfidence, positionConfidence, signal.confidence, expectAmount, quantity, force);
+      MyLogger.Logger.LogInformation("Placing order open long, prevConfidence={prevConfidence}, confidence={signal.confidence}, expectAmount={expectAmount}, quantity={quantity}, force={force}", prevConfidence, signal.confidence, expectAmount, quantity, force);
 
       order = await api.Trading.PlaceOrderAsync(
         symbol: symbol.Value.name,
