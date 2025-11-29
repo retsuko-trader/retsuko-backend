@@ -50,9 +50,9 @@ public class LiveBroker: IBroker, ISerializable {
 
     var newPortfolio = await PortfolioService.Get();
 
-    portfolio.totalBalance = (double)account.Data.TotalWalletBalance;
+    portfolio.totalBalance = newPortfolio.totalBalance;
     portfolio.asset = newPortfolio.assets.FirstOrDefault(x => x.symbol == symbolName).amount;
-    portfolio.currency = (double?)currencyInfo?.AvailableBalance ?? 0.0;
+    portfolio.currency = newPortfolio.currency;
 
     var info = await api.ExchangeData.GetExchangeInfoAsync();
     var filter = info.Data.Symbols.First(x => x.Pair == symbolName);
@@ -81,7 +81,7 @@ public class LiveBroker: IBroker, ISerializable {
       }
 
       var quantity = Math.Round(expectAmount / candle.close, filter.QuantityPrecision);
-      MyLogger.Logger.LogInformation("Placing order open long, prevConfidence={prevConfidence}, confidence={signal.confidence}, expectAmount={expectAmount}, quantity={quantity}, force={force}", prevConfidence, signal.confidence, expectAmount, quantity, force);
+      MyLogger.Logger.LogInformation("Placing order open long, prevConfidence={prevConfidence}, confidence={signal.confidence}, expectAmount={expectAmount}, quantity={quantity}, force={force}, portfolio.asset={asset}, portfolio.currency={currency}, portfolio.totalBalance={totalBalance}", prevConfidence, signal.confidence, expectAmount, quantity, force, portfolio.asset, portfolio.currency, portfolio.totalBalance);
 
       order = await api.Trading.PlaceOrderAsync(
         symbol: symbol.Value.name,
