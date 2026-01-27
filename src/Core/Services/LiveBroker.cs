@@ -43,7 +43,7 @@ public class LiveBroker: IBroker, ISerializable {
     await api.Account.ChangeInitialLeverageAsync(symbolName, config.leverage);
 
     var account = await api.Account.GetAccountInfoV3Async();
-    var assetInfo = account.Data.Assets.First(x => x.Asset == asset);
+    var assetInfo = account.Data.Assets.FirstOrDefault(x => x.Asset == asset);
     var currencyInfo = account.Data.Assets.First(x => x.Asset == "USDT");
 
     var position = account.Data.Positions.FirstOrDefault(x => x.Symbol == symbolName);
