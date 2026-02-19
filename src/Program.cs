@@ -4,6 +4,7 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Retsuko.Clients;
+using Retsuko.Core;
 using Retsuko.Plugins;
 
 const string SERVICE_NAME = "retsuko-backend";
@@ -40,6 +41,7 @@ builder.Services.AddOpenTelemetry()
       otlp.ExportProcessorType = OpenTelemetry.ExportProcessorType.Simple;
     }))
   .WithMetrics(metrics => metrics
+    .AddMeter(MetricsMeter.Name)
     .AddAspNetCoreInstrumentation()
     .AddHttpClientInstrumentation()
     .AddProcessInstrumentation()
