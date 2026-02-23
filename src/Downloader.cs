@@ -169,7 +169,7 @@ public static class Downloader {
   public static async Task DownloadAll(CancellationToken ct) {
     var symbols = await Symbol.List();
 
-    using var span = MyTracer.Tracer.StartActiveSpan("Downloader.DownloadCandles");
+    using var span = MyTracer.Tracer.StartRootSpan("Downloader.DownloadCandles");
     var datasetChanges = new ConcurrentBag<Dataset>();
 
     var options = new ParallelOptions {

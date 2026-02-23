@@ -12,12 +12,7 @@ public static class Subscriber {
   private static SemaphoreSlim processMutex = new(1, 1);
 
   static Subscriber() {
-    var redis = ConnectionMultiplexer.Connect(new ConfigurationOptions {
-      Password = Environment.GetEnvironmentVariable("REDIS_PASSWORD"),
-      EndPoints = { $"{Environment.GetEnvironmentVariable("REDIS_HOST")}:{Environment.GetEnvironmentVariable("REDIS_PORT")}" },
-    });
-
-    db = redis.GetDatabase();
+    db = MyRedis.Connection.GetDatabase();
   }
 
   public static async Task Subscribe(string id, string symbol, KlineInterval interval) {

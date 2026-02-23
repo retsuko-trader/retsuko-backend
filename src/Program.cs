@@ -33,8 +33,23 @@ builder.Services.AddOpenTelemetry()
     .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(SERVICE_NAME))
     .AddAspNetCoreInstrumentation()
     .AddGrpcClientInstrumentation()
-    .AddHttpClientInstrumentation()
-    .AddRedisInstrumentation()
+    .AddHttpClientInstrumentation(http => {
+      http.RecordException = true;
+      http.EnrichWithHttpRequestMessage = (activity, message) => {
+        activity.SetTag("httpKind", "outgoing");
+      };
+      http.FilterHttpRequestMessage = message => {
+        if (message.RequestUri != null) {
+          // disable traces to all candle downloading http requests
+          if (message.RequestUri.Host.StartsWith("s3-ap-northeast-1.amazonaws.com")) {
+            return false;
+          }
+        }
+
+        return true;
+      };
+    })
+    .AddRedisInstrumentation(MyRedis.Connection)
     .AddOtlpExporter(otlp => {
       otlp.Endpoint = new Uri(OTE_URL);
       otlp.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.Grpc;
