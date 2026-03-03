@@ -8,6 +8,8 @@ public static class MetricsMeter {
   private static readonly Meter meter;
 
   private static readonly Gauge<double> portfolioAssetsGauge;
+  private static readonly Gauge<double> portfolioProfitGauge;
+  private static readonly Gauge<double> portfolioProfitBalanceGauge;
   private static readonly Gauge<double> portfolioCurrencyGauge;
   private static readonly Gauge<double> portfolioTotalBalanceGauge;
   private static readonly Gauge<double> portfolioConfidenceGauge;
@@ -19,6 +21,8 @@ public static class MetricsMeter {
     meter = new Meter(Name);
 
     portfolioAssetsGauge = meter.CreateGauge<double>("retsuko.metrics.portfolio.assets");
+    portfolioProfitGauge = meter.CreateGauge<double>("retsuko.metrics.portfolio.profit");
+    portfolioProfitBalanceGauge = meter.CreateGauge<double>("retsuko.metrics.portfolio.profit_balance");
     portfolioCurrencyGauge = meter.CreateGauge<double>("retsuko.metrics.portfolio.currency");
     portfolioTotalBalanceGauge = meter.CreateGauge<double>("retsuko.metrics.portfolio.total_balance");
     portfolioConfidenceGauge = meter.CreateGauge<double>("retsuko.metrics.portfolio.confidence");
@@ -27,7 +31,13 @@ public static class MetricsMeter {
   }
 
   public static async Task Update(AccountPortfolio portfolio) {
-    portfolioAssetsGauge.Record(portfolio.assets.Length);
+    foreach (var asset in portfolio.assets) {
+      var tag = new KeyValuePair<string, object?>("symbol", asset.symbol);
+      portfolioAssetsGauge.Record(asset.currentBalance, tag);
+      portfolioProfitBalanceGauge.Record(asset.profitBalance, tag);
+      portfolioProfitGauge.Record(asset.profit, tag);
+    }
+
     portfolioCurrencyGauge.Record(portfolio.currency);
     portfolioTotalBalanceGauge.Record(portfolio.totalBalance);
     portfolioConfidenceGauge.Record(1 - portfolio.currency / portfolio.totalBalance);
