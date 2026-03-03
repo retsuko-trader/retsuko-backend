@@ -334,9 +334,13 @@ delay: {(DateTime.Now - e.candle.ts).TotalHours} hours";
 
   static async void OnException(HttpContext? context, Exception e) {
     try {
+      var title = e.Message.Substring(0, Math.Min(255, e.Message.Length));
+      var descriptionRaw = e.ToString();
+      var description = descriptionRaw.Substring(0, Math.Min(4095, descriptionRaw.Length));
+
       var embed = new EmbedBuilder()
-        .WithTitle(e.Message.Substring(0, 255))
-        .WithDescription(e.ToString())
+        .WithTitle(title)
+        .WithDescription(description)
         .WithColor(0xFF0000)
         .Build();
 
@@ -344,7 +348,9 @@ delay: {(DateTime.Now - e.candle.ts).TotalHours} hours";
         text: "Unhandled Exception",
         embeds: [embed]
       );
-    } catch {}
+    } catch (Exception ex0) {
+      MyLogger.Logger.LogError(ex0, "Failed to send exception message to Discord");
+    }
   }
 
   static async Task Retry(Func<Task> task, int maxRetries = 3, int delay = 1000) {
