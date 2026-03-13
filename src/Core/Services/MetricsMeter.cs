@@ -31,6 +31,14 @@ public static class MetricsMeter {
   }
 
   public static async Task Update(AccountPortfolio portfolio) {
+    if (portfolioAssetsGauge.Tags != null) {
+      foreach (var tag in portfolioAssetsGauge.Tags) {
+        portfolioAssetsGauge.Record(0, tag);
+        portfolioProfitBalanceGauge.Record(0, tag);
+        portfolioProfitGauge.Record(0, tag);
+      }
+    }
+
     foreach (var asset in portfolio.assets) {
       var tag = new KeyValuePair<string, object?>("symbol", asset.symbol);
       portfolioAssetsGauge.Record(asset.currentBalance, tag);
