@@ -32,6 +32,12 @@ public class CandleController : Controller {
     return Ok();
   }
 
+  [HttpPost("check/consistency")]
+  public async Task<IActionResult> CheckConsistency() {
+    var results = await CandleService.CheckConsistencyForAll();
+    return Ok(results);
+  }
+
   [HttpGet("{market}/{symbolId}/{interval}")]
   public async Task<IActionResult> GetCandle(
     int market,
