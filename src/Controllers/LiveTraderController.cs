@@ -48,10 +48,12 @@ public class LiveTraderController : Controller {
     var loader = new PreloadCandleLoader(req.config.dataset);
     using var trader = LiveTrader.Create(req.config);
 
+    await trader.Init();
     using (var preload = MyTracer.Tracer.StartActiveSpan("LiveTrader.Preload")) {
       await trader.Preload(loader);
     }
 
+    await trader.FinalizeMetrics();
     var state = await trader.Serialize();
 
     state.Insert();
