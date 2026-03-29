@@ -32,8 +32,8 @@ public class BacktestController: Controller {
   public async Task<IActionResult> RunSingle([FromBody]SingleBacktestRunRequest req) {
     var tracer = MyTracer.Tracer;
 
-    var loader = new BacktestCandleLoader(req.config.dataset);
-    var backtester = new Backtester(req.config);
+    using var loader = new BacktestCandleLoader(req.config.dataset);
+    using var backtester = new Backtester(req.config);
 
     await backtester.Init(req.debug);
 

@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+message EmptyReq {}
+
+message GStrategy {
+  string name = 1;
+  string config = 2;
+}
+
+message CandleRaw {
+  int32 market = 1;
+  int32 symbolId = 2;
+  int32 interval = 3;
+  google.protobuf.Timestamp ts = 4;
+  double open = 5;
+  double high = 6;
+  double low = 7;
+  double close = 8;
+  double volume = 9;
+}

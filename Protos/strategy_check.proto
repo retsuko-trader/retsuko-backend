@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+service GStrategyCheck {
+  rpc CheckConsistency(StrategyCheckInputLoad) returns (StrategyCheckOutputConsistency);
+  rpc Dump(StrategyCheckInputLoad) returns (StrategyCheckOutputDump);
+}
+
+message StrategyCheckInputLoad {
+  string name = 1;
+  string config = 2;
+  string state = 3;
+}
+
+message StrategyCheckOutputConsistency {
+  bool success = 1;
+  repeated string errors = 2;
+}
+
+message StrategyCheckOutputDump {
+  string state = 1;
+}

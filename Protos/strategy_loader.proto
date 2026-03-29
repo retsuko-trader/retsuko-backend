@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+import "Protos/strategy.proto";
+
+service GStrategyLoader {
+  rpc GetStrategies (EmptyReq) returns (StrategyList);
+}
+
+message StrategyList {
+  repeated GStrategy strategies = 1;
+}

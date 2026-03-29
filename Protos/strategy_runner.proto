@@ -1,0 +1,97 @@
+syntax = "proto3";
+
+import "Protos/strategy.proto";
+
+service GStrategyRunner {
+  rpc Run(stream StrategyRunInput) returns (stream StrategyRunOutput);
+  rpc RunLazy(stream StrategyRunInputBatch) returns (stream StrategyRunLazyOutputBatch);
+}
+
+message StrategyRunInput {
+  oneof type {
+    StrategyRunInputCreate create = 1;
+    StrategyRunInputPreload preload = 2;
+    StrategyRunInputUpdate update = 3;
+  }
+}
+
+message StrategyRunInputBatch {
+  oneof type {
+    StrategyRunInputCreate create = 1;
+    StrategyRunInputPreloadBatch preload = 2;
+    StrategyRunInputUpdateBatch update = 3;
+  }
+}
+
+message StrategyRunInputCreate {
+  string name = 1;
+  string config = 2;
+  optional string state = 3;
+  optional bool debug = 4;
+}
+
+message StrategyRunInputPreload {
+  CandleRaw candle = 1;
+}
+
+message StrategyRunInputPreloadBatch {
+  repeated CandleRaw candles = 1;
+}
+
+message StrategyRunInputUpdate {
+  CandleRaw candle = 1;
+}
+
+message StrategyRunInputUpdateBatch {
+  repeated CandleRaw candles = 1;
+}
+
+message StrategyRunOutput {
+  oneof type {
+    StrategyRunOutputSignal signal = 1;
+    StrategyRunOutputState state = 2;
+    StrategyRunOutputDebug debug = 3;
+  }
+}
+
+message StrategyRunOutputSignal {
+  int32 kind = 1;
+  double confidence = 2;
+}
+
+message StrategyRunOutputState {
+  string state = 1;
+}
+
+message StrategyRunOutputDebug {
+  GDebugIndicator indicator = 1;
+}
+
+message GDebugIndicator {
+  string name = 1;
+  int32 index = 2;
+  repeated GDebugIndicatorEntry values = 3;
+}
+
+message GDebugIndicatorEntry {
+  sint64 ts = 1;
+  float value = 2;
+}
+
+message StrategyRunLazyOutputBatch {
+  repeated StrategyRunLazyOutput outputs = 1;
+}
+
+message StrategyRunLazyOutput {
+  oneof type {
+    StrategyRunOutputSignalWithCandleRaw signal = 1;
+    StrategyRunOutputState state = 2;
+    StrategyRunOutputDebug debug = 3;
+  }
+}
+
+message StrategyRunOutputSignalWithCandleRaw {
+  int32 kind = 1;
+  double confidence = 2;
+  CandleRaw candle = 3;
+}

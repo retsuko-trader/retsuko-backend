@@ -4,7 +4,7 @@ using Retsuko.Plugins;
 
 namespace Retsuko.Core;
 
-public class LiveTrader: Trader<Strategy>, IAsyncSerializable<LiveTraderState> {
+public class LiveTrader: Trader<Strategy>, IAsyncSerializable<LiveTraderState>, IDisposable {
   public string Id => state.id;
 
   public readonly LiveTraderConfig config;
@@ -177,6 +177,10 @@ public class LiveTrader: Trader<Strategy>, IAsyncSerializable<LiveTraderState> {
     var innerState = JsonSerializer.Deserialize<InnerState>(state.states);
     firstCandle = innerState?.firstCandle;
     lastCandle = innerState?.lastCandle;
+  }
+
+  public void Dispose() {
+    strategy.Dispose();
   }
 
   record InnerState(Candle? firstCandle, Candle? lastCandle);

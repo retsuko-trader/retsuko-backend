@@ -41,7 +41,7 @@ public class PaperTraderController : Controller {
     }
 
     var loader = new PreloadCandleLoader(req.config.dataset);
-    var trader = PaperTrader.Create(req.config);
+    using var trader = PaperTrader.Create(req.config);
 
     using (var preload = MyTracer.Tracer.StartActiveSpan("PaperTrader.Preload")) {
       await trader.Preload(loader);
@@ -57,7 +57,7 @@ public class PaperTraderController : Controller {
 
   [HttpDelete("{id}")]
   public async Task<IActionResult> Delete(string id) {
-    var trader = await PaperTrader.Load(id);
+    using var trader = await PaperTrader.Load(id);
     if (trader == null) {
       return NotFound();
     }
@@ -68,5 +68,39 @@ public class PaperTraderController : Controller {
     await Subscriber.UnSubscribe(trader.Id);
 
     return Ok();
+  }
+
+  [HttpPost("{id}/check")]
+  public async Task<IActionResult> Check(string id) {
+    var state = await PaperTraderState.Get(id);
+    if (!state.HasValue) {
+      return NotFound();
+    }
+
+    var checker = new StrategyCheck(
+      state.Value.strategy_name,
+      state.Value.strategy_config,
+      state.Value.strategy_state
+    );
+
+    var result = await checker.Check();
+    return Ok(result);
+  }
+
+  [HttpGet("{id}/dump")]
+  public async Task<IActionResult> Dump(string id) {
+    var state = await PaperTraderState.Get(id);
+    if (!state.HasValue) {
+      return NotFound();
+    }
+
+    var checker = new StrategyCheck(
+      state.Value.strategy_name,
+      state.Value.strategy_config,
+      state.Value.strategy_state
+    );
+
+    var result = await checker.Dump();
+    return Ok(result);
   }
 }

@@ -6,17 +6,17 @@ using System.Text.Json;
 namespace Retsuko.Core;
 
 public class StrategyLazy: IStrategy, IDisposable {
-  protected readonly AsyncDuplexStreamingCall<StrategyInputBatch, StrategyLazyOutputBatch> call;
+  protected readonly AsyncDuplexStreamingCall<StrategyRunInputBatch, StrategyRunLazyOutputBatch> call;
 
   private readonly string name;
   private readonly string config;
 
-  private StrategyOutputState resultState;
+  private StrategyRunOutputState resultState;
 
-  private Queue<StrategyLazyOutput> outputs = new();
+  private Queue<StrategyRunLazyOutput> outputs = new();
 
   protected StrategyLazy(
-    AsyncDuplexStreamingCall<StrategyInputBatch, StrategyLazyOutputBatch> call,
+    AsyncDuplexStreamingCall<StrategyRunInputBatch, StrategyRunLazyOutputBatch> call,
     string name,
     string config
   ) {
@@ -31,8 +31,8 @@ public class StrategyLazy: IStrategy, IDisposable {
   }
 
   public async Task Init(string? state = null, bool debug = false) {
-    await call.RequestStream.WriteAsync(new StrategyInputBatch {
-      Create = new StrategyInputCreate {
+    await call.RequestStream.WriteAsync(new StrategyRunInputBatch {
+      Create = new StrategyRunInputCreate {
         Name = name,
         Config = config,
         State = state ?? "",
@@ -46,8 +46,8 @@ public class StrategyLazy: IStrategy, IDisposable {
   }
 
   public async Task PreloadBulk(IEnumerable<Candle> candles) {
-    var batch = new StrategyInputBatch {
-      Preload = new StrategyInputPreloadBatch {
+    var batch = new StrategyRunInputBatch {
+      Preload = new StrategyRunInputPreloadBatch {
         Candles = { candles.Select(c => new CandleRaw {
           Ts = Timestamp.FromDateTime(c.ts.ToUniversalTime()),
           Open = c.open,
@@ -67,8 +67,8 @@ public class StrategyLazy: IStrategy, IDisposable {
   }
 
   public async Task UpdateBulk(IEnumerable<Candle> candles) {
-    var batch = new StrategyInputBatch {
-      Update = new StrategyInputUpdateBatch {
+    var batch = new StrategyRunInputBatch {
+      Update = new StrategyRunInputUpdateBatch {
         Candles = { candles.Select(c => new CandleRaw {
           Ts = Timestamp.FromDateTime(c.ts.ToUniversalTime()),
           Open = c.open,

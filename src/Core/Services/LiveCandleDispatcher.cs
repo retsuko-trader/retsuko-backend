@@ -14,7 +14,7 @@ public static class LiveCandleDispatcher {
   }
 
   private static async Task HandlePaperTrader(string id, Symbol symbol, KlineInterval interval, Candle candle) {
-    var trader = await PaperTrader.Load(id);
+    using var trader = await PaperTrader.Load(id);
     if (trader == null) {
       MyLogger.Logger.LogError("failed to load paper trader; {id}", id);
       return;
@@ -27,7 +27,7 @@ public static class LiveCandleDispatcher {
   }
 
   private static async Task HandleLiveTrader(string id, Symbol symbol, KlineInterval interval, Candle candle) {
-    var trader = await LiveTrader.Load(id);
+    using var trader = await LiveTrader.Load(id);
     if (trader == null) {
       MyLogger.Logger.LogError("failed to load live trader; {id}", id);
       return;

@@ -5,7 +5,7 @@ using Google.Protobuf.WellKnownTypes;
 namespace Retsuko.Core;
 
 public class Strategy: IStrategy, IDisposable {
-  protected readonly AsyncDuplexStreamingCall<StrategyInput, StrategyOutput> call;
+  protected readonly AsyncDuplexStreamingCall<StrategyRunInput, StrategyRunOutput> call;
 
   private readonly string name;
   private readonly string config;
@@ -13,7 +13,7 @@ public class Strategy: IStrategy, IDisposable {
   private Candle lastCandle;
 
   protected Strategy(
-    AsyncDuplexStreamingCall<StrategyInput, StrategyOutput> call,
+    AsyncDuplexStreamingCall<StrategyRunInput, StrategyRunOutput> call,
     string name,
     string config
   ) {
@@ -28,8 +28,8 @@ public class Strategy: IStrategy, IDisposable {
   }
 
   public async Task Init(string? state = null, bool debug = false) {
-    await call.RequestStream.WriteAsync(new StrategyInput {
-      Create = new StrategyInputCreate {
+    await call.RequestStream.WriteAsync(new StrategyRunInput {
+      Create = new StrategyRunInputCreate {
         Name = name,
         Config = config,
         State = state ?? "",
@@ -39,8 +39,8 @@ public class Strategy: IStrategy, IDisposable {
   }
 
   public async Task Preload(Candle candle) {
-    await call.RequestStream.WriteAsync(new StrategyInput {
-      Preload = new StrategyInputPreload {
+    await call.RequestStream.WriteAsync(new StrategyRunInput {
+      Preload = new StrategyRunInputPreload {
         Candle = new CandleRaw {
           Ts = Timestamp.FromDateTime(candle.ts.ToUniversalTime()),
           Open = candle.open,
@@ -54,8 +54,8 @@ public class Strategy: IStrategy, IDisposable {
   }
 
   public virtual async Task Update(Candle candle) {
-    await call.RequestStream.WriteAsync(new StrategyInput {
-      Update = new StrategyInputUpdate {
+    await call.RequestStream.WriteAsync(new StrategyRunInput {
+      Update = new StrategyRunInputUpdate {
         Candle = new CandleRaw {
           Ts = Timestamp.FromDateTime(candle.ts.ToUniversalTime()),
           Open = candle.open,

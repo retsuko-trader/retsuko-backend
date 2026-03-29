@@ -1,7 +1,7 @@
 
 namespace Retsuko.Core;
 
-public class Backtester: Trader<StrategyLazy> {
+public class Backtester: Trader<StrategyLazy>, IDisposable {
   private readonly Dictionary<(string, int), List<DebugIndicator>> debugIndicators = [];
 
   private readonly BacktestConfig config;
@@ -68,5 +68,9 @@ public class Backtester: Trader<StrategyLazy> {
       metrics,
       dts
     );
+  }
+
+  public void Dispose() {
+    strategy.Dispose();
   }
 }

@@ -1,5 +1,6 @@
 using Binance.Net.Enums;
 using Retsuko.Core;
+using Retsuko.Plugins;
 
 public static class PortfolioService {
   public static async Task<AccountPortfolio> Get() {

@@ -46,7 +46,7 @@ public class LiveTraderController : Controller {
     }
 
     var loader = new PreloadCandleLoader(req.config.dataset);
-    var trader = LiveTrader.Create(req.config);
+    using var trader = LiveTrader.Create(req.config);
 
     using (var preload = MyTracer.Tracer.StartActiveSpan("LiveTrader.Preload")) {
       await trader.Preload(loader);
@@ -82,7 +82,7 @@ public class LiveTraderController : Controller {
 
   [HttpPost("{id}/manual/order")]
   public async Task<IActionResult> ManualOrder(string id, [FromBody] ManualOrderRequest req) {
-    var trader = await LiveTrader.Load(id);
+    using var trader = await LiveTrader.Load(id);
     if (trader == null) {
       return NotFound();
     }
@@ -104,5 +104,39 @@ public class LiveTraderController : Controller {
       trade.Value.price,
       trade.Value.profit,
     });
+  }
+
+  [HttpPost("{id}/check")]
+  public async Task<IActionResult> Check(string id) {
+    var state = await LiveTraderState.Get(id);
+    if (!state.HasValue) {
+      return NotFound();
+    }
+
+    var checker = new StrategyCheck(
+      state.Value.strategy_name,
+      state.Value.strategy_config,
+      state.Value.strategy_state
+    );
+
+    var result = await checker.Check();
+    return Ok(result);
+  }
+
+  [HttpGet("{id}/dump")]
+  public async Task<IActionResult> Dump(string id) {
+    var state = await LiveTraderState.Get(id);
+    if (!state.HasValue) {
+      return NotFound();
+    }
+
+    var checker = new StrategyCheck(
+      state.Value.strategy_name,
+      state.Value.strategy_config,
+      state.Value.strategy_state
+    );
+
+    var result = await checker.Dump();
+    return Ok(result);
   }
 }

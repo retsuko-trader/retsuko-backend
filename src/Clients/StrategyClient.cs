@@ -10,6 +10,8 @@ public class StrategyClient {
   public static GStrategyRunner.GStrategyRunnerClient runnerClient { get; private set; }
   public static GStrategyRunner.GStrategyRunnerClient devRunnerClient { get; private set; }
 
+  public static GStrategyCheck.GStrategyCheckClient devCheckClient { get; private set; }
+
   public static void Init() {
     InitDevelopment();
     InitProduction();
@@ -43,6 +45,7 @@ public class StrategyClient {
 
     devLoaderClient = new GStrategyLoader.GStrategyLoaderClient(channel);
     devRunnerClient = new GStrategyRunner.GStrategyRunnerClient(channel);
+    devCheckClient = new GStrategyCheck.GStrategyCheckClient(channel);
   }
 
   class SocketFactory(EndPoint endpoint) {
