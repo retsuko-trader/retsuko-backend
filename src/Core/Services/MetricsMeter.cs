@@ -31,6 +31,8 @@ public static class MetricsMeter {
   }
 
   public static async Task Update(AccountPortfolio portfolio) {
+    using var span = MyTracer.Tracer.StartActiveSpan("MetricsMeter.Update");
+
     if (portfolioAssetsGauge.Tags != null) {
       foreach (var tag in portfolioAssetsGauge.Tags) {
         portfolioAssetsGauge.Record(0, tag);

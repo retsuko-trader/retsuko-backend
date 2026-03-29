@@ -4,6 +4,8 @@ using Retsuko.Plugins;
 
 public static class PortfolioService {
   public static async Task<AccountPortfolio> Get() {
+    using var span = MyTracer.Tracer.StartActiveSpan("PortfolioService.Get");
+
     var client = Exchanger.LiveClient;
     var api = client.UsdFuturesApi;
 

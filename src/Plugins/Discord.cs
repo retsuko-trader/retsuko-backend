@@ -31,6 +31,7 @@ public static class Discord {
   }
 
   public static async Task SetPresence(AccountPortfolio portfolio) {
+    using var span = MyTracer.Tracer.StartActiveSpan("Discord.SetPresence");
     if (client == null) {
       MyLogger.Logger.LogWarning("Discord client not initialized");
       return;

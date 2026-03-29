@@ -30,6 +30,7 @@ builder.Services.AddOpenTelemetry()
   .ConfigureResource(resource => resource.AddService(SERVICE_NAME))
   .WithTracing(tracing => tracing
     .AddSource(SERVICE_NAME)
+    .AddProcessor<HttpClientFilterProcessor>()
     .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(SERVICE_NAME))
     .AddAspNetCoreInstrumentation()
     .AddGrpcClientInstrumentation()
@@ -42,6 +43,11 @@ builder.Services.AddOpenTelemetry()
         if (message.RequestUri != null) {
           // disable traces to all candle downloading http requests
           if (message.RequestUri.Host.StartsWith("s3-ap-northeast-1.amazonaws.com")) {
+            return false;
+          }
+
+          // discord bot websocket
+          if (message.RequestUri.Host == "gateway.discord.gg") {
             return false;
           }
         }
