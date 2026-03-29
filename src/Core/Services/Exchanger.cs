@@ -2,6 +2,7 @@ using Binance.Net;
 using Binance.Net.Clients;
 using Binance.Net.Enums;
 using Binance.Net.Interfaces.Clients.UsdFuturesApi;
+using CryptoExchange.Net.Objects;
 
 namespace Retsuko.Core;
 
@@ -28,6 +29,25 @@ public class Exchanger {
         );
       }
     });
+  }
+
+  public static async Task<WebCallResult<T>> RetryOnError<T>(Func<Task<WebCallResult<T>>> func, int retries = 3, int delayMs = 1000) {
+    for (int i = 0; i < retries; i++) {
+      var result = await func();
+
+      if (result.Success) {
+        return result;
+      } else {
+        await Task.Delay(delayMs);
+        MyLogger.Logger.LogError("Binance API error code={code} message={message} data={data}, attempt {attempt}/{retries}", result.Error!.Code, result.Error.Message, result.Error.Data, i + 1, retries);
+
+        if (i == retries - 1) {
+          return result;
+        }
+      }
+    }
+
+    throw new Exception("unreachable");
   }
 
   public static async IAsyncEnumerable<Binance.Net.Interfaces.IBinanceKline> GetKlinesAsync(string symbol, KlineInterval interval, DateTime? startTime, DateTime? endTime) {

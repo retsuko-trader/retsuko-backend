@@ -27,15 +27,23 @@ public static class LiveCandleDispatcher {
   }
 
   private static async Task HandleLiveTrader(string id, Symbol symbol, KlineInterval interval, Candle candle) {
+    var prevState = await LiveTraderState.Get(id);
     using var trader = await LiveTrader.Load(id);
     if (trader == null) {
       MyLogger.Logger.LogError("failed to load live trader; {id}", id);
       return;
     }
 
-    await trader.Tick(candle);
+    var trade = await trader.Tick(candle);
     await trader.FinalizeMetrics();
-    var state = await trader.Serialize();
-    await state.Update();
+
+    var nextState = await trader.Serialize();
+    await nextState.Update();
+
+    LiveTraderHistory.Create(id, prevState.Value, nextState, new LiveTraderHistory.MessageTick(
+      candle: candle,
+      trade: trade,
+      force: false
+    ));
   }
 }

@@ -36,14 +36,20 @@ public class LiveBroker: IBroker, ISerializable {
 
   public async Task<Trade?> HandleAdvice(Candle candle, Signal signal, bool force = false) {
     var symbol = await Symbol.Get(candle.symbolId);
-    // TODO: fix asset name
     var symbolName = symbol.Value.name;
     var asset = symbolName.Replace("USDT", "");
 
     await api.Account.ChangeInitialLeverageAsync(symbolName, config.leverage);
 
-    var account = await api.Account.GetAccountInfoV3Async();
+    var account = await Exchanger.RetryOnError(() => api.Account.GetAccountInfoV3Async());
+    if (!account.Success) {
+      MyLogger.Logger.LogError("Error in LiveBroker.HandleAdvice: binance account api error code={code} message={message} data={data}", account.Error!.Code, account.Error.Message, account.Error.Data);
+      EventDispatcher.Exception(null, new Exception($"Error in LiveBroker.HandleAdvice: binance account api error code={account.Error.Code} message={account.Error.Message}"));
+      return null;
+    }
+
     var assetInfo = account.Data.Assets.FirstOrDefault(x => x.Asset == asset);
+    MyLogger.Logger.LogInformation("assetInfo={assetInfo}", assetInfo);
     var currencyInfo = account.Data.Assets.First(x => x.Asset == "USDT");
 
     var position = account.Data.Positions.FirstOrDefault(x => x.Symbol == symbolName);

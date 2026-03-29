@@ -73,7 +73,19 @@ public class LiveTrader: Trader<Strategy>, IAsyncSerializable<LiveTraderState>, 
 
     if (signal != null) {
       if (!delayed) {
-        trade = await broker.HandleAdvice(candle, signal, force);
+        try {
+          trade = await broker.HandleAdvice(candle, signal, force);
+        } catch (Exception ex) {
+          MyLogger.Logger.LogError(
+            ex,
+            "Error while broker HandleAdvice, candle={candle} signal={signal} force={force}",
+            candle,
+            signal,
+            force
+          );
+
+          EventDispatcher.Exception(null, ex);
+        }
       } else {
         MyLogger.Logger.LogError(
           "LiveTrader {traderId} got signal {signal} but delayed {delay} for candle {candle}",
@@ -85,6 +97,7 @@ public class LiveTrader: Trader<Strategy>, IAsyncSerializable<LiveTraderState>, 
 
         EventDispatcher.Event(new LiveBrokerOrderDelayedEvent(this, candle, signal));
       }
+
       if (trade.HasValue) {
         if (trades.Count > 0) {
           var lastTrade = trades[^1];
