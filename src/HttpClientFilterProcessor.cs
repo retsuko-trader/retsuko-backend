@@ -9,9 +9,7 @@ public class HttpClientFilterProcessor : BaseProcessor<Activity> {
   };
 
   public override void OnEnd(Activity activity) {
-    if (activity.DisplayName == "DiscordCron.Job"
-      || activity.DisplayName == "GET health"
-    ) {
+    if (activity.DisplayName == "DiscordCron.Job") {
       activity.ActivityTraceFlags &= ~ActivityTraceFlags.Recorded;
       activity.IsAllDataRequested = false;
     }

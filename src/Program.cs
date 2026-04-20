@@ -32,7 +32,22 @@ builder.Services.AddOpenTelemetry()
     .AddSource(SERVICE_NAME)
     .AddProcessor<HttpClientFilterProcessor>()
     .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(SERVICE_NAME))
-    .AddAspNetCoreInstrumentation()
+    .AddAspNetCoreInstrumentation(asp => {
+      asp.RecordException = true;
+      asp.EnrichWithHttpRequest = (activity, request) => {
+        activity.DisplayName = $"{request.Method} {request.Path}";
+      };
+
+      asp.Filter = context => {
+        var path = context.Request.Path.Value;
+
+        if (path != null && path.StartsWith("/health")) {
+          return false;
+        }
+
+        return true;
+      };
+    })
     .AddGrpcClientInstrumentation()
     .AddHttpClientInstrumentation(http => {
       http.RecordException = true;
