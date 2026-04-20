@@ -216,31 +216,35 @@ public static class Downloader {
     }
 
     foreach (var interval in intervals) {
-      var archives = (await GetKlineArchives(symbol, interval)).OrderBy(x => x.day).ToArray();
-      MyLogger.Logger.LogTrace("Downloading {symbol} {interval}", symbol, interval);
+      try {
+        var archives = (await GetKlineArchives(symbol, interval)).OrderBy(x => x.day).ToArray();
+        MyLogger.Logger.LogTrace("Downloading {symbol} {interval}", symbol, interval);
 
-      var dataset = await Dataset.GetFrom(db, interval);
+        var dataset = await Dataset.GetFrom(db, interval);
 
-      foreach (var archive in archives) {
-        try {
-          if (dataset.end > archive.day) {
-            continue;
+        foreach (var archive in archives) {
+          try {
+            if (dataset.end > archive.day) {
+              continue;
+            }
+
+            var exist = await Candle.GetFirstBetween(db, interval, archive.day, archive.day.AddDays(1));
+            if (exist.HasValue) {
+              continue;
+            }
+
+            // MyLogger.Logger.LogInformation("Start downloading {symbol} {interval} {day} {archive}", symbol, interval, archive.day, archive);
+            await DownloadArchive(db, archive, symbols, t);
+          } catch (Exception ex) {
+            MyLogger.Logger.LogError(ex, "Error downloading {symbol} {interval} {archive}", symbol, interval, archive);
           }
-
-          var exist = await Candle.GetFirstBetween(db, interval, archive.day, archive.day.AddDays(1));
-          if (exist.HasValue) {
-            continue;
-          }
-
-          // MyLogger.Logger.LogInformation("Start downloading {symbol} {interval} {day} {archive}", symbol, interval, archive.day, archive);
-          await DownloadArchive(db, archive, symbols, t);
-        } catch (Exception ex) {
-          MyLogger.Logger.LogError(ex, "Error downloading {symbol} {interval} {archive}", symbol, interval, archive);
         }
-      }
 
-      dataset = await Dataset.GetFrom(db, interval);
-      datasets.Add(dataset);
+        dataset = await Dataset.GetFrom(db, interval);
+        datasets.Add(dataset);
+      } catch (Exception ex) {
+        MyLogger.Logger.LogError(ex, "Error downloading {symbol} {interval}", symbol, interval);
+      }
     }
   }
 }
