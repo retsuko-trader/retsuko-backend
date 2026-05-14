@@ -43,7 +43,7 @@ public class LiveBroker: IBroker, ISerializable {
 
     var account = await Exchanger.RetryOnError(() => api.Account.GetAccountInfoV3Async());
     if (!account.Success) {
-      MyLogger.Logger.LogError("Error in LiveBroker.HandleAdvice: binance account api error code={code} message={message} data={data}", account.Error!.Code, account.Error.Message, account.Error.Data);
+      MyLogger.Logger.LogError("Error in LiveBroker.HandleAdvice: binance account api error code={code} message={message}", account.Error!.Code, account.Error.Message);
       EventDispatcher.Exception(null, new Exception($"Error in LiveBroker.HandleAdvice: binance account api error code={account.Error.Code} message={account.Error.Message}"));
       return null;
     }

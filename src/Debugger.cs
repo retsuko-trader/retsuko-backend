@@ -111,7 +111,7 @@ public static class Debugger {
   public static async Task TestBinance() {
     var client = new BinanceRestClient(options => {
       options.Environment = BinanceEnvironment.Testnet;
-      options.ApiCredentials = new CryptoExchange.Net.Authentication.ApiCredentials(
+      options.ApiCredentials = new BinanceCredentials(
         Environment.GetEnvironmentVariable("BINANCE_TESTNET_API_KEY") ?? "",
         Environment.GetEnvironmentVariable("BINANCE_TESTNET_API_SECRET") ?? ""
       );
@@ -145,6 +145,7 @@ public static class Debugger {
     }));
     return;
 
+#pragma warning disable CS0162 // Unreachable code detected
     var quantity = Math.Round(totalBalance * rate / price, filter.QuantityPrecision);
     Console.WriteLine($"Price: {price} Balance: {balance} Quantity: {quantity}");
 
@@ -198,6 +199,7 @@ public static class Debugger {
       price: price,
       timeInForce: Binance.Net.Enums.TimeInForce.GoodTillCanceled
     );
+#pragma warning restore CS0162 // Unreachable code detected
   }
 
   public static async Task TestDownloader() {
@@ -217,9 +219,13 @@ public static class Debugger {
 
       await sr.ReadLineAsync();
 
-      while (!sr.EndOfStream) {
+      while (true) {
         var line = await sr.ReadLineAsync();
-        var row = line!.Split(',');
+
+        // EndOfStream
+        if (line == null) {
+          break;
+        }        var row = line!.Split(',');
 
         var openTime = DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(row[0]));
         var open = double.Parse(row[1]);

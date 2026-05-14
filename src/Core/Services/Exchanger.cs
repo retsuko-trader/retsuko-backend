@@ -18,12 +18,12 @@ public class Exchanger {
     return new BinanceRestClient(options => {
       if (isTestNet) {
         options.Environment = BinanceEnvironment.Testnet;
-        options.ApiCredentials = new CryptoExchange.Net.Authentication.ApiCredentials(
+        options.ApiCredentials = new BinanceCredentials(
           Environment.GetEnvironmentVariable("BINANCE_TESTNET_API_KEY") ?? "",
           Environment.GetEnvironmentVariable("BINANCE_TESTNET_API_SECRET") ?? ""
         );
       } else {
-        options.ApiCredentials = new CryptoExchange.Net.Authentication.ApiCredentials(
+        options.ApiCredentials = new BinanceCredentials(
           Environment.GetEnvironmentVariable("BINANCE_API_KEY") ?? "",
           Environment.GetEnvironmentVariable("BINANCE_API_SECRET") ?? ""
         );
@@ -39,7 +39,7 @@ public class Exchanger {
         return result;
       } else {
         await Task.Delay(delayMs);
-        MyLogger.Logger.LogError("Binance API error code={code} message={message} data={data}, attempt {attempt}/{retries}", result.Error!.Code, result.Error.Message, result.Error.Data, i + 1, retries);
+        MyLogger.Logger.LogError("Binance API error code={code} message={message}, attempt {attempt}/{retries}", result.Error!.Code, result.Error.Message, i + 1, retries);
 
         if (i == retries - 1) {
           return result;

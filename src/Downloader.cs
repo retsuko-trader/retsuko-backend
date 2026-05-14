@@ -129,9 +129,15 @@ public static class Downloader {
       using var fs = entry.Open();
       using var sr = new StreamReader(fs);
 
-      while (!sr.EndOfStream) {
+      while (true) {
         var line = await sr.ReadLineAsync(t);
-        if (line == null || line.StartsWith("open")) {
+
+        // EndOfStream
+        if (line == null) {
+          break;
+        }
+
+        if (line.StartsWith("open")) {
           continue;
         }
 
