@@ -45,8 +45,33 @@ public class LiveTraderController : Controller {
       return BadRequest("Invalid symbol");
     }
 
-    var loader = new PreloadCandleLoader(req.config.dataset);
-    using var trader = LiveTrader.Create(req.config);
+    var state = await CreateLiveTrader(req.config, symbol.Value.name);
+    return Ok(new ExtLiveTraderState(state));
+  }
+
+  public record DuplicateLiveTraderRequest(
+    [Required] LiveTraderCreateConfig info
+  );
+
+  [HttpPost("{id}/duplicate")]
+  public async Task<IActionResult> Duplicate(string id, [FromBody]DuplicateLiveTraderRequest req) {
+    using var trader = await LiveTrader.Load(id);
+    if (trader == null) {
+      return NotFound();
+    }
+
+    var config = trader.state.Config;
+    var newConfig = config with { info = req.info };
+
+    var symbol = await Symbol.Get(config.dataset.symbolId);
+    var newState = await CreateLiveTrader(newConfig, symbol.Value.name);
+
+    return Ok(new ExtLiveTraderState(newState));
+  }
+
+  private async Task<LiveTraderState> CreateLiveTrader(LiveTraderConfig config, string symbolName) {
+    var loader = new PreloadCandleLoader(config.dataset);
+    using var trader = LiveTrader.Create(config);
 
     await trader.Init();
     using (var preload = MyTracer.Tracer.StartActiveSpan("LiveTrader.Preload")) {
@@ -57,9 +82,9 @@ public class LiveTraderController : Controller {
     var state = await trader.Serialize();
 
     state.Insert();
-    await Subscriber.Subscribe(trader.Id, symbol.Value.name, req.config.dataset.interval);
+    await Subscriber.Subscribe(trader.Id, symbolName, config.dataset.interval);
 
-    return Ok(new ExtLiveTraderState(state));
+    return state;
   }
 
   [HttpDelete("{id}")]
