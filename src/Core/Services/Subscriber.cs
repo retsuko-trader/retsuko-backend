@@ -20,7 +20,7 @@ public static class Subscriber {
     var url = $"{workerUrl}/subscribe";
 
     var client = new HttpClient();
-    var resp = await client.PostAsJsonAsync(url, new { id, symbol, interval });
+    var resp = await client.PostAsJsonAsync(url, new { id, symbol, interval = (int)interval });
 
     resp.EnsureSuccessStatusCode();
   }
