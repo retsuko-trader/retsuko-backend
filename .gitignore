@@ -45,4 +45,4 @@ msbuild.wrn
 
 /db
 .env
-/Properties/launchSettings.json
+launchSettings.json

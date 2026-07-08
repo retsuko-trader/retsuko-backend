@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Retsuko.Core.Api/Retsuko.Core.Api.csproj" />
+    <Project Path="src/Retsuko.Core/Retsuko.Core.csproj" />
+    <Project Path="src/Retsuko.Shared/Retsuko.Shared.csproj" />
+    <Project Path="src/Retsuko.Strategies.Api/Retsuko.Strategies.Api.csproj" />
+    <Project Path="src/Retsuko.Strategies/Retsuko.Strategies.csproj" />
+    <Project Path="src/Retsuko.Worker.Api/Retsuko.Worker.Api.csproj" />
+  </Folder>
+</Solution>

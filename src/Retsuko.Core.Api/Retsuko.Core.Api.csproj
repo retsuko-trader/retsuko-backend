@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Retsuko</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProtoBuf Include="Protos\*.proto" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Binance.Net" />
+    <PackageReference Include="coravel" />
+    <PackageReference Include="cuid.net" />
+    <PackageReference Include="Discord.Net" />
+    <PackageReference Include="DuckDB.NET.Data.Full" />
+    <PackageReference Include="Grpc.AspNetCore" />
+    <PackageReference Include="Grpc.Net.Client" />
+    <PackageReference Include="OpenTelemetry.AutoInstrumentation" />
+    <PackageReference Include="OpenTelemetry.Exporter.Console" />
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.GrpcNetClient" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Http" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Process" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.StackExchangeRedis" />
+    <PackageReference Include="StackExchange.Redis" />
+    <PackageReference Include="System.Linq.Async" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Retsuko.Core\Retsuko.Core.csproj" />
+    <ProjectReference Include="..\Retsuko.Shared\Retsuko.Shared.csproj" />
+    <ProjectReference Include="..\Retsuko.Proto\Retsuko.Proto.csproj" />
+  </ItemGroup>
+
+</Project>
