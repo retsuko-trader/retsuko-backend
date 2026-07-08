@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/Retsuko.Backtests.Cli/Retsuko.Backtests.Cli.csproj" />
     <Project Path="src/Retsuko.Core.Api/Retsuko.Core.Api.csproj" />
     <Project Path="src/Retsuko.Core/Retsuko.Core.csproj" />
     <Project Path="src/Retsuko.Shared/Retsuko.Shared.csproj" />
