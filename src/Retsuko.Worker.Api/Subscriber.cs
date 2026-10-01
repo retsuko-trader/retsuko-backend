@@ -101,6 +101,8 @@ public class Subscriber {
         CloseTime = kline.CloseTime,
         OpenPrice = kline.OpenPrice,
         ClosePrice = kline.ClosePrice,
+        HighPrice = kline.HighPrice,
+        LowPrice = kline.LowPrice,
         Volume = kline.Volume
       });
     }
