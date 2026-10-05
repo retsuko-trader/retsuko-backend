@@ -47,6 +47,18 @@ public class LiveTrader: Trader<Strategy>, IAsyncSerializable<LiveTraderState>, 
       firstCandle = candle;
     }
 
+    if (lastCandle.HasValue) {
+      if (lastCandle.Value.ts >= candle.ts) {
+        MyLogger.Logger.LogError(
+          "LiveTrader {traderId} received out-of-order candle. candle={candle} lastCandle={lastCandle}",
+          Id,
+          candle,
+          lastCandle
+        );
+        return null;
+      }
+    }
+
     var delay = DateTime.UtcNow - candle.ts - candle.interval.ToTimeSpan();
     var delayed = delay > TimeSpan.FromHours(1);
     if (delayed)  {
