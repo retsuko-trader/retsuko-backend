@@ -44,6 +44,6 @@ public static class LiveCandleDispatcher {
       candle: candle,
       trade: trade,
       force: false
-    ));
+    )).Insert();
   }
 }
