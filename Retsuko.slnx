@@ -3,6 +3,7 @@
     <Project Path="src/Retsuko.Backtests.Cli/Retsuko.Backtests.Cli.csproj" />
     <Project Path="src/Retsuko.Core.Api/Retsuko.Core.Api.csproj" />
     <Project Path="src/Retsuko.Core/Retsuko.Core.csproj" />
+    <Project Path="src/Retsuko.Proto/Retsuko.Proto.csproj" />
     <Project Path="src/Retsuko.Shared/Retsuko.Shared.csproj" />
     <Project Path="src/Retsuko.Strategies.Api/Retsuko.Strategies.Api.csproj" />
     <Project Path="src/Retsuko.Strategies/Retsuko.Strategies.csproj" />
