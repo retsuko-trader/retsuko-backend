@@ -34,6 +34,12 @@ public class LiveTraderController : Controller {
     });
   }
 
+  [HttpGet("{id}/history")]
+  public async Task<IActionResult> GetHistory(string id) {
+    var histories = await LiveTraderHistory.List(id);
+    return Ok(histories);
+  }
+
   public record CreateLiveTraderRequest(
     [Required] LiveTraderConfig config
   );
@@ -64,18 +70,22 @@ public class LiveTraderController : Controller {
     var newConfig = config with { info = req.info };
 
     var symbol = await Symbol.Get(config.dataset.symbolId);
-    var newState = await CreateLiveTrader(newConfig, symbol.Value.name);
+    var newState = await CreateLiveTrader(newConfig, symbol.Value.name, trader.state);
 
     return Ok(new ExtLiveTraderState(newState));
   }
 
-  private async Task<LiveTraderState> CreateLiveTrader(LiveTraderConfig config, string symbolName) {
+  private async Task<LiveTraderState> CreateLiveTrader(LiveTraderConfig config, string symbolName, LiveTraderState? prevState = null) {
     var loader = new PreloadCandleLoader(config.dataset);
     using var trader = LiveTrader.Create(config);
 
     await trader.Init();
     using (var preload = MyTracer.Tracer.StartActiveSpan("LiveTrader.Preload")) {
       await trader.Preload(loader);
+    }
+
+    if (prevState.HasValue) {
+      trader.MigrateFrom(prevState.Value);
     }
 
     await trader.FinalizeMetrics();
@@ -165,5 +175,15 @@ public class LiveTraderController : Controller {
 
     var result = await checker.Dump();
     return Ok(result);
+  }
+
+  [HttpGet("{id}/state")]
+  public async Task<IActionResult> GetRawState(string id) {
+    var state = await LiveTraderState.Get(id);
+    if (!state.HasValue) {
+      return NotFound();
+    }
+
+    return Ok(state.Value);
   }
 }

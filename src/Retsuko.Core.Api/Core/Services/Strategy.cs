@@ -101,6 +101,7 @@ public class Strategy: IStrategy, IDisposable {
   }
 
   public static Strategy Create(string name, string config) {
+    MyLogger.Logger.LogInformation("Creating strategy {strategy} with config={config}, stacktrace={stacktrace}", name, config, Environment.StackTrace);
     var call = StrategyClient.runnerClient.Run();
     return new Strategy(call, name, config);
   }

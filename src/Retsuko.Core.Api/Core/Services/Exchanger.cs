@@ -115,7 +115,10 @@ public class Exchanger {
     if (count <= 1000) {
       var candles = await api.GetKlinesAsync(symbol, interval, null, null, count);
       foreach (var candle in candles.Data) {
-        yield return candle;
+        // last candle is not closed yet
+        if (candle.CloseTime <= DateTime.UtcNow) {
+          yield return candle;
+        }
       }
 
       yield break;

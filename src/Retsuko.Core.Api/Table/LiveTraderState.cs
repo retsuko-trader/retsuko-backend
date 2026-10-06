@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using DuckDB.NET.Data;
 using Retsuko.Core;
 
@@ -22,6 +23,7 @@ public record struct LiveTraderState(
 ) {
   public const string TableName = "live_trader";
 
+  [JsonIgnore]
   public readonly LiveTraderConfig Config => new(
     info: new(name, description),
     dataset: JsonSerializer.Deserialize<LiveTraderDatasetConfig>(dataset)!,
@@ -29,6 +31,7 @@ public record struct LiveTraderState(
     broker: JsonSerializer.Deserialize<LiveBrokerConfig>(broker_config)!
   );
 
+  [JsonIgnore]
   public readonly TraderMetrics Metrics => JsonSerializer.Deserialize<TraderMetrics>(metrics)!;
 
   public static LiveTraderState From(System.Data.Common.DbDataReader reader) {

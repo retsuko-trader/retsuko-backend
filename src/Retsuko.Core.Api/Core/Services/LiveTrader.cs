@@ -181,6 +181,16 @@ public class LiveTrader: Trader<Strategy>, IAsyncSerializable<LiveTraderState>, 
     return trader;
   }
 
+  public void MigrateFrom(LiveTraderState prevState) {
+    var prevInnerState = JsonSerializer.Deserialize<InnerState>(state.states);
+    lastCandle = prevInnerState?.lastCandle;
+
+    (broker as LiveBroker)?.MigrateFrom(prevState.broker_state);
+
+    state.states = JsonSerializer.Serialize(new InnerState(firstCandle, lastCandle));
+    state.broker_state = broker.Serialize();
+  }
+
   public override async Task FinalizeMetrics() {
     await base.FinalizeMetrics();
     await strategy.FinishInputs();

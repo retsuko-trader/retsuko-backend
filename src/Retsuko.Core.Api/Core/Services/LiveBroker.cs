@@ -192,6 +192,16 @@ public class LiveBroker: IBroker, ISerializable {
     return portfolio;
   }
 
+  public void MigrateFrom(string prevState) {
+    var prev = JsonSerializer.Deserialize<InnerState>(prevState);
+    if (prev == null) {
+      return;
+    }
+
+    config = prev.config;
+    position = prev.position;
+  }
+
   public string Serialize() {
     return JsonSerializer.Serialize<InnerState>(new (config, InitialBalance, position));
   }
